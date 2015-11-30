@@ -14,6 +14,21 @@ import org.apache.commons.math3.stat.inference.TTest;
  */
 public class Lr2gene {
    private ArrayList<Sample> inputGenes;
+   private double MINMAD = 10;
+   private double MINDIFF = 0.7;
+   private double PVALUE = 0.00001;
+   private double AMP = 1.5;
+   private double DEL = -2.00;
+   private double EXONDIFF = 1.25;
+   private double MAXRATE = 0.1; // maximum 
+   private double MAXCNT = 5;
+   private double MINTTDIFF = 0.7;
+   private double TTPVALUE = 0.000001;
+   private double MINBPEXONS = 8;
+   
+   
+   
+   
    public Lr2gene(Seq2cov_return sq){
        Seq2cov_return inputGenes = sq;
    }
