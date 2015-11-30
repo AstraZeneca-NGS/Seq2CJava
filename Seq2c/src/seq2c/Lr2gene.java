@@ -25,7 +25,7 @@ public class Lr2gene {
    private double MINTTDIFF = 0.7;
    private double TTPVALUE = 0.000001;
    private double MINBPEXONS = 8;
-   
+   private double MINSEGS = 1;
    
    
    
@@ -150,6 +150,14 @@ private Sig checkBP(ArrayList<Sample> segs){
         double[] bmiscArr = isConsecutive(bm);
         double[] upiscArr = isConsecutive(up);
         if(bmiscArr[0] != 0){
+            if(bmiscArr[1] != 1){
+                String ti;
+                for(int k = 0; k < up.size(); k ++){
+                   if(up.get(i)[2] == bmiscArr[1]) ti = String.valueOf(k);
+                }
+                splice
+            }
+            Sig callsSig = getCalls();
             
         } else if(upiscArr[0] != 0){
             
@@ -213,11 +221,54 @@ private Sig findBP(double[] lr){
     String cn = "NA";
     double mindiff = 0;
     String sigseg = "";
-    
+    double[] lr_x = new double[(int)MINBPEXONS];
+    double[] lr_y = new double[(int)MINBPEXONS];
+    for(int i = (int)MINBPEXONS; i < lr.length - (int)MINBPEXONS ; i++){
+       for(int k = 0; k <=(i-1); k++){
+           lr_x[k] = lr[k] ;
+       }
+       for(int k = 0; k <=(lr.length-1); k++){
+           lr_y[k] = lr[k] ;
+       }
+       
+       double bpleft = StatUtils.mean(lr_x);
+       double bpright = StatUtils.mean(lr_y);
+       if((bpleft > bpright && lr_x[1] < lr_y[lr_y.length - 1])||(bpleft < bpright && lr_y[1] < lr_x[lr_x.length - 1])){
+         continue;  
+       }
+        TTest ttest = new TTest();
+       double p = ttest.tTest(lr_x,lr_y);
+       double[] sigseg1 = new double[i];
+       double[] sigseg2 = new double[lr.length - i+1];
+       int j =0;
+       for(int k =1; k <= i ; k++){
+           sigseg1[j] = k;
+           j++;
+       }
+       j = 0;
+       for(int k = i+1; k <= lr.length ; k++){
+           sigseg2[j] = k;
+           j++;
+       }
+       double diff = StatUtils.mean(lr_x) - StatUtils.mean(lr_y);
+       if((p < minp || ( (p > 0 && minp/p < 10 && Math.abs(diff) > mindiff ) || (p == 0 && Math.abs(diff) > mindiff) )) && ((p < TTPVALUE && Math.abs(diff) > MINTTDIFF) || (p < 0.001 && Math.abs(diff) >= MINTTDIFF && (Math.abs(bpleft) > 0.80 || Math.abs(bpright) > 0.80 )))){
+           minp = p;
+           bpi = Math.abs(bpleft) > Math.abs(bpright) ? i : (lr.length - i + 1);
+           siglr = Math.abs(bpleft) > Math.abs(bpright) ? bpleft : bpright;
+           sigseg = Math.abs(bpleft) > abs(bpright) ? joinDouble(sigseg1) : joinDouble(sigseg2);
+           cn = Math.abs(bpleft) > Math.abs(bpright) ? (bpleft < -0.5 ? "Del" : (bpleft > 0.5 ? "Amp" : "NA") ) : (bpright < -0.5 ? "Del" : (bpright > 0.5 ? "Amp" : "NA" )); 
+           mindiff = Math.abs(diff);
+       }
+    }
+    Sig sig = new Sig(minp, bpi, cn, siglr, mindiff, sigseg);
+    if(minp < 1){
+        return sig;
+    }
+    return null;       
     
 }
 
-private void getCalls(ArrayList<double[]> bm, ArrayList<double[]> up){
+private Sig getCalls(ArrayList<double[]> bm, ArrayList<double[]> up){
   double[] tlr1 = new double[bm.size()];
   double[] ti1 = new double[bm.size()];
   double[] tlr2 = new double[up.size()];
@@ -235,8 +286,27 @@ private void getCalls(ArrayList<double[]> bm, ArrayList<double[]> up){
     ti2[i] = u[2];
     i++;
   }
-  i = 0;    
-    
+  i = 0;
+  String cn;
+  String ti;
+  double segs;
+  double mean;
+  double mean1 = StatUtils.mean(tlr1);
+  double mean2 = StatUtils.mean(tlr2);
+  if(Math.abs(mean1)>Math.abs(mean2)){
+      cn = mean1 < -0.35 ? "Del" : (mean1 > 0.35 ? "Amp" : "NA");
+      segs = tlr1.length;
+      mean = mean1;
+      ti = joinDouble(ti1,",");
+  }else{
+      cn = mean2 < -0.35 ? "Del" : (mean2 > 0.35 ? "Amp" : "NA");
+      segs = tlr2.length;
+      mean = mean2;
+      ti = joinDouble(ti2,",");;
+  }
+  Sig sig = new Sig(cn,segs,bm.size()+up.size(),mean,ti);
+  return sig;
+  
 }
 
 private double[] isSig(ArrayList<double[]> bm, ArrayList<double[]> up ){
@@ -314,6 +384,20 @@ private double[] isSig(ArrayList<double[]> bm, ArrayList<double[]> up ){
           result[0] = -1;
           result[1] = 0;
       }
+    return result;
+}
+private String joinDouble(double[] doubles, String delim){
+    int i = 1;
+    String result = new String();
+    for(double d: doubles){
+        String r = String.valueOf(d);
+        if(i < doubles.length){
+            r += delim;
+        }
+        result +=r;
+        i++;
+    }
+    
     return result;
 }
 

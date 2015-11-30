@@ -10,6 +10,9 @@ package seq2c;
  * @author Petr_Rastegaev
  */
 public class Sig {
+    private Sig(minp,bpi){
+        
+    }
     private double minp = 1;
     private double bpi = 0;
     private double siglr = 0;
