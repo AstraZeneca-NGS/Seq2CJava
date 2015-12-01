@@ -67,7 +67,7 @@ public class Bam2Reads {
      *                 each line in file represent one file
      * @return map with sample names/bam file names
      */
-    private static Map<String, String> parseFile(String fileName) {
+    public static Map<String, String> parseFile(String fileName) {
         Map<String, String> map = new LinkedHashMap<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(new File(fileName)))) {
