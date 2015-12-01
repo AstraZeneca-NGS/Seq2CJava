@@ -307,7 +307,7 @@ public class Cov2lr {
                     if (useControlSamples) {
                         addControlSamples(result, sample);
                     }
-                    System.out.println(result);
+                    //System.out.println(result);
                 }
             }
         }

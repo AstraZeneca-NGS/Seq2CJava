@@ -25,7 +25,9 @@ public class Seq2c {
          }
          Map<String, Long> stat = Bam2Reads.printStatsToFile("D:\\Samles\\seq2c\\sample2bam1.txt");
          Cov2lr cov2lr = new Cov2lr(true,stat,sqrlist,false,"");
-         cov2lr.doWork();
+         ArrayList<Sample> cov = cov2lr.doWork();
+         Lr2gene lr2 = new Lr2gene(cov);
+         lr2.run();
         //System.out.println(Arrays.asList(result));
     }
     

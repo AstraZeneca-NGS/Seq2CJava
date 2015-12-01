@@ -29,10 +29,12 @@ public class Lr2gene {
    
    
    
-   public Lr2gene(Seq2cov_return sq){
-       Seq2cov_return inputGenes = sq;
+   public Lr2gene(ArrayList<Sample> sq){
+       this.inputGenes = sq;
    }
-
+   public void run(){
+       Lr2gene_mainloop();
+   }
 private void Lr2gene_mainloop() {
     HashMap<String,HashMap<String,ArrayList<Sample>>> g2amp = new HashMap();
     boolean opt_c = false;
@@ -86,17 +88,25 @@ private void Lr2gene_mainloop() {
         }
         double lr_med;
         if(lr.size()> 1){
-           lr_med = 1.0;//median
+           lr_med = StatUtils.percentile(convertDoubles(lr), 50);//median
         } else {
             lr_med = lr.get(0);
         }
         Sig sig = checkBP(sq2amparr);
         if(sig == null){
+            System.out.println("Null sig" + lr.size());
             if(lr_med > AMP){
-
+                System.out.println("Null Sig >AMP");
+                sig = new Sig(0.0,0.0,(double)lr.size(),"Whole",lr_med,"Amp",lr.size(),0.0,"ALL",lr_med);
             }else if(lr_med <= DEL){
-
+                sig = new Sig(0.0,0.0,(double)lr.size(),"Whole",lr_med,"Del",lr.size(),0.0,"ALL",lr_med);
+                System.out.println("Null Sig <= Del");
             }
+        }
+    
+        //System.out.println(lr_med+"\t"+sig.getSig()+"\t"+sig.getBp()+"\t"+sig.getCn()+"\t"+sig.getBpi()+"\t"+sig.getTotal()+"\t"+sig.getSiglr()+"\t"+sig.getSigdiff()+"\t"+sig.getSigseg());
+        if(sig != null){
+            System.out.println(lr_med+"\t"+sig.getSig());//+"\t"+sig.getBp()+"\t"+sig.getCn()+"\t"+sig.getBpi()+"\t"+sig.getTotal()+"\t"+sig.getSiglr()+"\t"+sig.getSigdiff()+"\t"+sig.getSigseg());
         }
     }    
 } 
@@ -122,6 +132,7 @@ private Sig checkBP(ArrayList<Sample> segs){
     double[] bps = getBPS(lr);
     double minbp = 1;
     double maxmd = 1;
+    Sig sig = null;
     for(double bp : bps){
         
         ArrayList<double[]> bm = new ArrayList<>();
@@ -155,13 +166,31 @@ private Sig checkBP(ArrayList<Sample> segs){
                 for(int k = 0; k < up.size(); k ++){
                    if(up.get(i)[2] == bmiscArr[1]) ti = String.valueOf(k);
                 }
-                splice
+                //splice
             }
-            Sig callsSig = getCalls();
+            sig = getCalls(bm,up);
+            double[] issig = isSig(bm,up);
+            sig.addSig(issig[0]);
+            sig.addSdiff(issig[1]);
             
         } else if(upiscArr[0] != 0){
+             if(upiscArr[1] != 1){
+                String ti;
+                for(int k = 0; k < bm.size(); k ++){
+                   if(up.get(i)[2] == upiscArr[1]) ti = String.valueOf(k);
+                }
+                //splice
+            }
+            sig = getCalls(up,bm);
+            double[] issig = isSig(up,bm);
+            sig.addSig(issig[0]);
+            sig.addSdiff(issig[1]);
             
         }
+    }
+    if(sig == null){
+        System.out.println("192: Sig null");
+        sig = findBP(lr);
     }
     return sig;    
 } 
@@ -195,9 +224,15 @@ private double[] getBPS(double[] lr){
     java.util.Arrays.sort(dis);
     
     for(int i =0; i < lr.length; i++){
-        dis[i][0] = lr[i] - lr[i-1];
-        dis[i][1] = lr[i];
-        dis[i][2] = lr[i -1];
+        if(i==0){
+            dis[i][0] = lr[i] - lr[lr.length-1];
+            dis[i][1] = lr[i];
+            dis[i][2] = lr[lr.length -1];
+        }else{
+            dis[i][0] = lr[i] - lr[i-1];
+            dis[i][1] = lr[i];
+            dis[i][2] = lr[i -1];
+        }
     }
     
     java.util.Arrays.sort(dis, new java.util.Comparator<double[]>() {
@@ -255,13 +290,14 @@ private Sig findBP(double[] lr){
            minp = p;
            bpi = Math.abs(bpleft) > Math.abs(bpright) ? i : (lr.length - i + 1);
            siglr = Math.abs(bpleft) > Math.abs(bpright) ? bpleft : bpright;
-           sigseg = Math.abs(bpleft) > abs(bpright) ? joinDouble(sigseg1) : joinDouble(sigseg2);
+           sigseg = Math.abs(bpleft) > Math.abs(bpright) ? joinDouble(sigseg1,",") : joinDouble(sigseg2,",");
            cn = Math.abs(bpleft) > Math.abs(bpright) ? (bpleft < -0.5 ? "Del" : (bpleft > 0.5 ? "Amp" : "NA") ) : (bpright < -0.5 ? "Del" : (bpright > 0.5 ? "Amp" : "NA" )); 
            mindiff = Math.abs(diff);
        }
     }
-    Sig sig = new Sig(minp, bpi, cn, siglr, mindiff, sigseg);
+    Sig sig = new Sig(0,minp, bpi,"",siglr, cn,0,  mindiff, sigseg,0);
     if(minp < 1){
+        System.out.println("");
         return sig;
     }
     return null;       
@@ -302,9 +338,9 @@ private Sig getCalls(ArrayList<double[]> bm, ArrayList<double[]> up){
       cn = mean2 < -0.35 ? "Del" : (mean2 > 0.35 ? "Amp" : "NA");
       segs = tlr2.length;
       mean = mean2;
-      ti = joinDouble(ti2,",");;
+      ti = joinDouble(ti2,",");
   }
-  Sig sig = new Sig(cn,segs,bm.size()+up.size(),mean,ti);
+  Sig sig = new Sig(0.0,0.0,segs,"",mean,cn,bm.size()+up.size(),0.0,ti,0.0);
   return sig;
   
 }
