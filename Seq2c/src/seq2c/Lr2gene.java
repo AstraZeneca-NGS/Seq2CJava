@@ -37,8 +37,15 @@ public class Lr2gene {
    }
 private void Lr2gene_mainloop() {
     HashMap<String,HashMap<String,ArrayList<Sample>>> g2amp = new HashMap();
+    HashMap<String,String[]> loc = new HashMap();
     boolean opt_c = false;
+    //System.out.println("inputGenes" + inputGenes.size());
     for(Sample sqr : inputGenes){
+        String[] locArr = new String[4];
+        locArr[0] = sqr.getChr();
+        locArr[1] = String.valueOf(sqr.getStart());
+        locArr[2] = String.valueOf(sqr.getEnd());
+        locArr[3] = String.valueOf(sqr.getEnd() - sqr.getStart() + 1);
         HashMap<String,ArrayList<Sample>> gq;
         ArrayList<Sample> sq2amparr;
         if(g2amp.containsKey(sqr.getName())){
@@ -61,14 +68,17 @@ private void Lr2gene_mainloop() {
         }
         gq.put(sqr.getGene(),sq2amparr);
         g2amp.put(sqr.getName(), gq);
+        loc.put(sqr.getGene(), locArr);
     }
-    
+    //System.out.println("g2amp " + g2amp.size());
     for(Map.Entry<String,HashMap<String,ArrayList<Sample>>> entry: g2amp.entrySet()){
         String Sample = entry.getKey();
         HashMap<String,ArrayList<Sample>> gq = entry.getValue();
+        //System.out.println("gq " + gq.size());
         for(Map.Entry<String,ArrayList<Sample>> entry2: gq.entrySet()){
         String gene = entry2.getKey();
         ArrayList<Sample> sq2amparr = entry2.getValue();
+        //System.out.println("sq2amparr" + sq2amparr.size());
         
         Collections.sort(sq2amparr,new Comparator<Sample>() {
                 public int compare(Sample ints, Sample otherInts) {
@@ -103,12 +113,16 @@ private void Lr2gene_mainloop() {
                 System.out.println("Null Sig <= Del");
             }
         }
-    
-        //System.out.println(lr_med+"\t"+sig.getSig()+"\t"+sig.getBp()+"\t"+sig.getCn()+"\t"+sig.getBpi()+"\t"+sig.getTotal()+"\t"+sig.getSiglr()+"\t"+sig.getSigdiff()+"\t"+sig.getSigseg());
-        if(sig != null){
-            System.out.println(lr_med+"\t"+sig.getSig());//+"\t"+sig.getBp()+"\t"+sig.getCn()+"\t"+sig.getBpi()+"\t"+sig.getTotal()+"\t"+sig.getSiglr()+"\t"+sig.getSigdiff()+"\t"+sig.getSigseg());
+        String[] locArr =loc.get(gene);  
+        String locStr = Sample +"\t"+ gene +"\t"+ locArr[0]+"\t"+locArr[1]+"\t"+locArr[2]+"\t"+locArr[3]+"\t";
+        String str1;
+        if (sig.getSig() != -1){ 
+            str1 = lr_med+"\t"+sig.getSig()+"\t"+sig.getBp()+"\t"+sig.getCn()+"\t"+sig.getBpi()+"\t"+sig.getTotal()+"\t"+sig.getSiglr()+"\t"+sig.getSigdiff()+"\t"+sig.getSigseg();
+        } else{
+            str1 = lr_med+"\t"+"\t"+"\t"+"\t"+sig.getTotal();
         }
-    }    
+        System.out.println(locStr+str1);
+    }   
 } 
 }
 private Sig checkBP(ArrayList<Sample> segs){
@@ -189,9 +203,14 @@ private Sig checkBP(ArrayList<Sample> segs){
         }
     }
     if(sig == null){
-        System.out.println("192: Sig null");
+        //System.out.println("192: Sig null");
         sig = findBP(lr);
     }
+    if(sig.getSig() != 0){
+        sig.setBp("BP");
+        
+    }
+    sig.setTotal(arr.length);
     return sig;    
 } 
 
@@ -249,7 +268,10 @@ private double[] getBPS(double[] lr){
 }
 
 private Sig findBP(double[] lr){
-    if (lr.length < 15) return null;
+    if (lr.length < 15){
+        Sig sig = new Sig(-1.0,0, 0,"",0,"",0,  0, "",0);
+        return sig;
+    }
     double minp = 1;
     double bpi = 0;
     double siglr = 0;
@@ -295,12 +317,13 @@ private Sig findBP(double[] lr){
            mindiff = Math.abs(diff);
        }
     }
-    Sig sig = new Sig(0,minp, bpi,"",siglr, cn,0,  mindiff, sigseg,0);
+    Sig sig;
     if(minp < 1){
-        System.out.println("");
-        return sig;
+        sig = new Sig(0,minp, bpi,"",siglr, cn,0,  mindiff, sigseg,0);
+    }else{
+       sig = new Sig(-1.0,0, 0,"",0,"",0,  0, "",0); 
     }
-    return null;       
+    return sig;       
     
 }
 

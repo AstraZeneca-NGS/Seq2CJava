@@ -151,4 +151,18 @@ public class Sample {
         return builder.toString();
     }
 
+    /**
+     * @return the chr
+     */
+    public String getChr() {
+        return chr;
+    }
+
+    /**
+     * @param chr the chr to set
+     */
+    public void setChr(String chr) {
+        this.chr = chr;
+    }
+
 }
