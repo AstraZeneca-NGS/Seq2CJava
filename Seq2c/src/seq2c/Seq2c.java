@@ -16,8 +16,20 @@ public class Seq2c {
      */
     public static void main(String[] args) {
         // TODO code application logic here
-        String bedFile = "D:\\Samles\\seq2c\\Illumina_TruSeq_Exome.bed";
-        String sam2bamFile = "D:\\Samles\\seq2c\\sample2bam1.txt";
+        String sam2bamFile =  args[0]; // "D:\\Samles\\seq2c\\sample2bam1.txt";
+        String bedFile = args[1];//"D:\\Samles\\seq2c\\Illumina_TruSeq_Exome.bed";
+        String control = "";
+        String seq2copt = "";
+        
+        if(args.length > 2){
+            control = args[2];
+        }
+        if(args.length > 3){
+            seq2copt = args[3];
+        }
+        
+        boolean controlFlag = false;
+        if(!control.isEmpty()) controlFlag = true;
         //Seq2cov seq2cov = new Seq2cov("D:\\VarDict\\AURA\\GeneRead_Lung.primers.bed","D:\\VarDict\\AURA\\AURA_26-ready.bam","AURA_26");
          Map<String, String> sam2bam = Bam2Reads.parseFile(sam2bamFile);
         ArrayList<Gene> sqrlist = new ArrayList();
@@ -27,9 +39,9 @@ public class Seq2c {
             sqrlist.addAll(sq);
         } 
          Map<String, Long> stat = Bam2Reads.printStatsToFile(sam2bamFile);
-         Cov2lr cov2lr = new Cov2lr(true,stat,sqrlist,false,"");
+         Cov2lr cov2lr = new Cov2lr(true,stat,sqrlist,controlFlag,control);
          ArrayList<Sample> cov = cov2lr.doWork();
-         Lr2gene lr2 = new Lr2gene(cov);
+         Lr2gene lr2 = new Lr2gene(cov,seq2copt);
          lr2.run();
         //System.out.println(Arrays.asList(result));
     }

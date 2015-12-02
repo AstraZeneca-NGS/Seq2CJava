@@ -6,6 +6,8 @@
 package seq2c;
 import java.util.*;
 import java.util.Collections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.math3.stat.*;
 import org.apache.commons.math3.stat.inference.TTest;
 /**
@@ -26,16 +28,18 @@ public class Lr2gene {
    private double TTPVALUE = 0.000001;
    private double MINBPEXONS = 8;
    private double MINSEGS = 1;
+   private String seq2copt;
    
    
-   
-   public Lr2gene(ArrayList<Sample> sq){
+   public Lr2gene(ArrayList<Sample> sq, String opt){
        this.inputGenes = sq;
+       this.seq2copt = opt;
    }
    public void run(){
        Lr2gene_mainloop();
    }
 private void Lr2gene_mainloop() {
+    getOpt(seq2copt);
     HashMap<String,HashMap<String,ArrayList<Sample>>> g2amp = new HashMap();
     HashMap<String,String[]> loc = new HashMap();
     boolean opt_c = false;
@@ -471,6 +475,50 @@ private double[] convertDoubles(List<Double> doubles)
         i++;
     }
     return ret;
+}
+private void getOpt(String opt){
+   if(!opt.isEmpty()){
+   String regexp = "-(\\w+)\\s+(\\d*\\.?\\d*)"; 
+   Pattern pattern = Pattern.compile(regexp);
+   Matcher matcher = pattern.matcher(opt);
+   while(matcher.find()){
+        if( "M".equals(matcher.group(1)) ){
+            this.MINMAD = Double.parseDouble(matcher.group(2));
+        }
+        if( "d".equals(matcher.group(1)) ){
+            this.MINDIFF = Double.parseDouble(matcher.group(2));
+        }
+        if( "p".equals(matcher.group(1)) ){
+            this.PVALUE = Double.parseDouble(matcher.group(2));
+        }
+        if( "A".equals(matcher.group(1)) ){
+            this.AMP = Double.parseDouble(matcher.group(2));
+        }
+        if( "D".equals(matcher.group(1)) ){
+            this.DEL = Double.parseDouble(matcher.group(2));
+        }
+        if( "E".equals(matcher.group(1)) ){
+            this.EXONDIFF = Double.parseDouble(matcher.group(2));
+        }
+        if( "R".equals(matcher.group(1)) ){
+            this.MAXRATE = Double.parseDouble(matcher.group(2));
+        }
+       
+        if( "N".equals(matcher.group(1)) ){
+            this.MAXCNT = Double.parseDouble(matcher.group(2));
+        }
+        if( "t".equals(matcher.group(1)) ){
+            this.MINTTDIFF = Double.parseDouble(matcher.group(2));
+        }
+        if( "P".equals(matcher.group(1)) ){
+            this.TTPVALUE = Double.parseDouble(matcher.group(2));
+        }
+        if( "e".equals(matcher.group(1)) ){
+            this.MINBPEXONS = Double.parseDouble(matcher.group(2));
+        }
+        
+   }
+   }
 }
 
 }
