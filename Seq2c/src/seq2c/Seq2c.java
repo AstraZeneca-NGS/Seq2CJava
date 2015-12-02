@@ -41,7 +41,7 @@ public class Seq2c {
          Map<String, Long> stat = Bam2Reads.printStatsToFile(sam2bamFile);
          Cov2lr cov2lr = new Cov2lr(true,stat,sqrlist,controlFlag,control);
          ArrayList<Sample> cov = cov2lr.doWork();
-         Lr2gene lr2 = new Lr2gene(cov,seq2copt);
+         Lr2gene lr2 = new Lr2gene(cov,seq2copt,controlFlag);
          lr2.run();
         //System.out.println(Arrays.asList(result));
     }

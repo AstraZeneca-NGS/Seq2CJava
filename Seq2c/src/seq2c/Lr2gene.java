@@ -29,11 +29,13 @@ public class Lr2gene {
    private double MINBPEXONS = 8;
    private double MINSEGS = 1;
    private String seq2copt;
+   private boolean useControl;
    
    
-   public Lr2gene(ArrayList<Sample> sq, String opt){
+   public Lr2gene(ArrayList<Sample> sq, String opt,boolean useControl){
        this.inputGenes = sq;
        this.seq2copt = opt;
+       this.useControl = useControl;
    }
    public void run(){
        Lr2gene_mainloop();
@@ -42,7 +44,7 @@ private void Lr2gene_mainloop() {
     getOpt(seq2copt);
     HashMap<String,HashMap<String,ArrayList<Sample>>> g2amp = new HashMap();
     HashMap<String,String[]> loc = new HashMap();
-    boolean opt_c = false;
+    
     //System.out.println("inputGenes" + inputGenes.size());
     for(Sample sqr : inputGenes){
         String[] locArr = new String[4];
@@ -91,14 +93,14 @@ private void Lr2gene_mainloop() {
                 }
             });
         int i;
-        if(opt_c){
-            i = 11;
-        } else {
-            i = 10;
-        }
+        
         ArrayList<Double> lr = new ArrayList();
         for(Sample sqarr  : sq2amparr){
-            lr.add(sqarr.getNorm3());
+            if(useControl){
+                lr.add(sqarr.getNorm3s());
+            }else{
+                lr.add(sqarr.getNorm3());
+            }
         }
         double lr_med;
         if(lr.size()> 1){
