@@ -303,10 +303,11 @@ public class Cov2lr {
                     Sample sample = entrySample.getValue();
                     String title = amplicon ? entry.getKey() : sample.getTitle(genes.get(sample.getGene()));
                     String result = sample.getResultString(title);
-                    sampleArr.add(sample);
+                    
                     if (useControlSamples) {
-                        addControlSamples(result, sample);
+                        sample = addControlSamples(sample);
                     }
+                    sampleArr.add(sample);
                     //System.out.println(result);
                 }
             }
@@ -314,7 +315,7 @@ public class Cov2lr {
     return sampleArr;
     }
 
-    private void addControlSamples(String result, Sample sample) {
+    private Sample addControlSamples(Sample sample) {
         List<Double> list = new LinkedList<>();
         for (String s: controlSamples) {
             for (Map.Entry<String, Map<String, Sample>> entry : samples.entrySet()) {
@@ -323,9 +324,10 @@ public class Cov2lr {
         }
         if (!list.isEmpty()) {
             double meanVal = mean.evaluate(toDoubleArray(list));
-            StringBuilder builder = new StringBuilder(result);
-            builder.append("\t").append(String.format("%.3f%n", meanVal == 0 ? sample.getNorm1b() / meanVal / log.value(2) : 0));
+            
+            sample.setNorm3s( meanVal == 0 ? sample.getNorm1b() / meanVal / log.value(2) : 0);
         }
+        return sample;
     }
 
     private void setNorm(double medDepth, List<String> bad, Map<String, Double> factor2, Map<String, Double> sampleMedian) {

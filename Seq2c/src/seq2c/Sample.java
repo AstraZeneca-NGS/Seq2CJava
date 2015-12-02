@@ -23,6 +23,7 @@ public class Sample {
     private double norm1b;
     private double norm2;
     private double norm3;
+    private double norm3s;
 
     public Sample(String name, String sample, String chr, long start, long end, String gene, long len, double cov) {
         this.name = name;
@@ -163,6 +164,20 @@ public class Sample {
      */
     public void setChr(String chr) {
         this.chr = chr;
+    }
+
+    /**
+     * @return the norm3s
+     */
+    public double getNorm3s() {
+        return norm3s;
+    }
+
+    /**
+     * @param norm3s the norm3s to set
+     */
+    public void setNorm3s(double norm3s) {
+        this.norm3s = norm3s;
     }
 
 }
