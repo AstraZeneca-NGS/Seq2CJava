@@ -119,6 +119,15 @@ private void Lr2gene_mainloop() {
                 System.out.println("Null Sig <= Del");
             }
         }
+        String regexp = "\\d"; 
+        Pattern pattern1 = Pattern.compile(regexp);
+        Matcher matcher1 = pattern1.matcher(sig.getSigseg());
+        if(!sig.getSigseg().isEmpty() && matcher1.find()){
+            String[] exons = sig.getSigseg().split(",");
+            double estart = sq2amparr.get(Integer.valueOf(exons[0]) -1).getStart();
+            double eend = sq2amparr.get(exons.length -1).getEnd();
+            sig.setSigseg(sig.getSigseg()+(estart-eend));
+        }
         String[] locArr =loc.get(gene);  
         String locStr = Sample +"\t"+ gene +"\t"+ locArr[0]+"\t"+locArr[1]+"\t"+locArr[2]+"\t"+locArr[3]+"\t";
         String str1;
@@ -127,6 +136,9 @@ private void Lr2gene_mainloop() {
         } else{
             str1 = lr_med+"\t"+"\t"+"\t"+"\t"+sig.getTotal();
         }
+        
+        
+        
         System.out.println(locStr+str1);
     }   
 } 
@@ -182,11 +194,11 @@ private Sig checkBP(ArrayList<Sample> segs){
         double[] upiscArr = isConsecutive(up);
         if(bmiscArr[0] != 0){
             if(bmiscArr[1] != 1){
-                String ti;
+                int ti = 0;
                 for(int k = 0; k < up.size(); k ++){
-                   if(up.get(i)[2] == bmiscArr[1]) ti = String.valueOf(k);
+                   if(up.get(i)[2] == bmiscArr[1]) ti = k;
                 }
-                //splice
+                bm.add((int)bmiscArr[1],up.get(ti)); //splice
             }
             sig = getCalls(bm,up);
             double[] issig = isSig(bm,up);
@@ -195,11 +207,11 @@ private Sig checkBP(ArrayList<Sample> segs){
             
         } else if(upiscArr[0] != 0){
              if(upiscArr[1] != 1){
-                String ti;
+                int ti = 0;
                 for(int k = 0; k < bm.size(); k ++){
-                   if(up.get(i)[2] == upiscArr[1]) ti = String.valueOf(k);
+                   if(up.get(i)[2] == upiscArr[1]) ti = k;
                 }
-                //splice
+                up.add((int)upiscArr[1],bm.get(ti)); //splice
             }
             sig = getCalls(up,bm);
             double[] issig = isSig(up,bm);
