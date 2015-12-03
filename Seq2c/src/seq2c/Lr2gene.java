@@ -54,8 +54,8 @@ private void Lr2gene_mainloop() {
         locArr[3] = String.valueOf(sqr.getEnd() - sqr.getStart() + 1);
         HashMap<String,ArrayList<Sample>> gq;
         ArrayList<Sample> sq2amparr;
-        if(g2amp.containsKey(sqr.getName())){
-            gq = g2amp.get(sqr.getName());
+        if(g2amp.containsKey(sqr.getSample())){
+            gq = g2amp.get(sqr.getSample());
             if(gq.containsKey(sqr.getGene())){
                 sq2amparr = gq.get(sqr.getGene());
                 sq2amparr.add(sqr);
@@ -73,7 +73,7 @@ private void Lr2gene_mainloop() {
             
         }
         gq.put(sqr.getGene(),sq2amparr);
-        g2amp.put(sqr.getName(), gq);
+        g2amp.put(sqr.getSample(), gq);
         loc.put(sqr.getGene(), locArr);
     }
     //System.out.println("g2amp " + g2amp.size());
