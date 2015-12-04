@@ -269,7 +269,7 @@ private double[] getBPS(double[] lr){
             dis[i][2] = lr[i -1];
         }
     }
-    java.util.Arrays.sort(dis);
+    //java.util.Arrays.sort(dis);
     
     java.util.Arrays.sort(dis, new java.util.Comparator<double[]>() {
         public int compare(double[] a, double[] b) {
@@ -295,8 +295,8 @@ private Sig findBP(double[] lr){
     String cn = "NA";
     double mindiff = 0;
     String sigseg = "";
-    double[] lr_x = new double[(int)MINBPEXONS];
-    double[] lr_y = new double[(int)MINBPEXONS];
+    double[] lr_x = new double[lr.length - (int)MINBPEXONS];
+    double[] lr_y = new double[lr.length];
     for(int i = (int)MINBPEXONS; i < lr.length - (int)MINBPEXONS ; i++){
        for(int k = 0; k <=(i-1); k++){
            lr_x[k] = lr[k] ;
