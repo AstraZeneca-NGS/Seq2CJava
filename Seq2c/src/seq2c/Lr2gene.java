@@ -258,8 +258,6 @@ private double[] isConsecutive(ArrayList<double[]> ref) {
 private double[] getBPS(double[] lr){
     ArrayList<Double> bpsArr = new ArrayList<>();
     double[][] dis = new double[lr.length][3];
-    java.util.Arrays.sort(dis);
-    
     for(int i =0; i < lr.length; i++){
         if(i==0){
             dis[i][0] = lr[i] - lr[lr.length-1];
@@ -271,6 +269,7 @@ private double[] getBPS(double[] lr){
             dis[i][2] = lr[i -1];
         }
     }
+    java.util.Arrays.sort(dis);
     
     java.util.Arrays.sort(dis, new java.util.Comparator<double[]>() {
         public int compare(double[] a, double[] b) {
