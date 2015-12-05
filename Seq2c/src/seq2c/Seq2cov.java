@@ -41,7 +41,7 @@ public class Seq2cov {
     }
     
     private LinkedHashMap<String,Seq2cov_gene> processBed(){
-    System.out.println("Reading File from Java code");
+    //System.out.println("Reading File from Java code");
        //Name of the file
        try{
           //Create object of FileReader

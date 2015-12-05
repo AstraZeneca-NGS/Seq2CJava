@@ -48,7 +48,7 @@ public class Bam2Reads {
                         BAMIndexMetaData meta = index.getMetaData(i);
                         count += meta.getAlignedRecordCount();
                     }
-                    System.out.println(entry.getKey()+" "+ count);
+                    //System.out.println(entry.getKey()+" "+ count);
                     result.put(entry.getKey(), count);
                     //writer.write(count + "\n");
                     //writer.flush();

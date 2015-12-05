@@ -77,6 +77,7 @@ private void Lr2gene_mainloop() {
         loc.put(sqr.getGene(), locArr);
     }
     //System.out.println("g2amp " + g2amp.size());
+    int j =0;
     for(Map.Entry<String,HashMap<String,ArrayList<Sample>>> entry: g2amp.entrySet()){
         String Sample = entry.getKey();
         HashMap<String,ArrayList<Sample>> gq = entry.getValue();
@@ -138,7 +139,8 @@ private void Lr2gene_mainloop() {
         }
         
         
-        
+        if (j ==0) System.out.println("Sample\tGene\tChr\tStart\tEnd\tLength\tLog2ratio\tSig\tBP_Whole\tAmp_Del\tAb_Seg\tTotal_Seg\tAb_log2ratio\tLog2r_Diff\tAb_Seg_Loc\tAb_Samples\tAb_Samples_Pcnt");
+        j++;
         System.out.println(locStr+str1);
     }   
 } 
