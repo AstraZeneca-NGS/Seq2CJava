@@ -1,9 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package seq2c;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 
 /**
  *
@@ -14,12 +13,6 @@ import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.util.Precision;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.*;
 
 /**
  *  Normalize the coverage from targeted sequencing to CNV log2 ratio.  The algorithm assumes the medium
@@ -96,7 +89,7 @@ public class Cov2lr {
      *
      */
 
-    public Cov2lr(boolean amplicon, Map<String, Long> stat, ArrayList<Gene> genesArray, boolean useControlSamples, String controlSamples) {
+    public Cov2lr(boolean amplicon, Map<String, Long> stat, Collection<Gene> genesArray, boolean useControlSamples, String controlSamples) {
         this.amplicon = amplicon;
         this.useControlSamples = false;
         this.mappingReads = stat;
@@ -143,70 +136,62 @@ public class Cov2lr {
     }
 
 
-    private Map<String, Long> readStat(String fileName) {
-        Map<String, Long> map = new LinkedHashMap<>();
-        try (BufferedReader reader= new BufferedReader(new FileReader(fileName))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] samples = line.split("\\s+");
-                if (samples.length == 2) {
-                    map.put(samples[0], Long.parseLong(samples[1]));
-                }
+//    private Map<String, Long> readStat(String fileName) {
+//        Map<String, Long> map = new LinkedHashMap<>();
+//        try (BufferedReader reader= new BufferedReader(new FileReader(fileName))) {
+//            String line;
+//            while ((line = reader.readLine()) != null) {
+//                String[] samples = line.split("\\s+");
+//                if (samples.length == 2) {
+//                    map.put(samples[0], Long.parseLong(samples[1]));
+//                }
+//            }
+//        } catch (IOException e) {
+//            System.err.println("Cannot open file " + fileName);
+//        } catch (NumberFormatException e) {
+//            System.err.println("Cannot parse long number");
+//        }
+//        return map;
+//    }
+
+    private void readCoverage(Collection<Gene> genesArray, Map<String, Gene> genes, Map<String, Map<String, Sample>> samples) {
+
+        for (Gene gn : genesArray) {
+            if (gn.getTag().contains("Whole")) {
+                continue;
             }
-        } catch (IOException e) {
-            System.err.println("Cannot open file " + fileName);
-        } catch (NumberFormatException e) {
-            System.err.println("Cannot parse long number");
+
+            String sample = gn.getSample();
+            String gene = gn.getName();
+            String chr = gn.getChr();
+            String tag = gn.getTag();
+            long start = gn.getStart();
+            long end = gn.getEnd();
+            long len = gn.getLen();
+            double depth = gn.getDepth();
+            addGene(genes, sample, gene, chr, start, end, tag, len, depth);
+            String key = amplicon ? join(gene, chr, start, end, len) : gene;
+            addSample(samples, key, sample, chr, start, end, len, depth, gene);
+
         }
-        return map;
     }
 
-    private void readCoverage(ArrayList<Gene> genesArray, Map<String, Gene> genes, Map<String, Map<String, Sample>> samples) {
-        int count = 0;
-        for(Gene gn: genesArray) {
-            String line;
-                if(gn.getTag().contains("Whole")) continue;
-                //skip lines with words "Sample, Whole, Control, Undertermined
-                
-                
-                    //count ++;
-                    String sample = gn.getSample();
-                    String gene =  gn.getName();
-                    String chr = gn.getChr();
-                    String tag = gn.getTag();
-                        long start = gn.getStart();
-                        long end = gn.getEnd();
-                        long len = gn.getLen();
-                        double depth = gn.getDepth();
-                        addGene(genes, sample, gene, chr, start, end, tag, len, depth);
-                        String key = amplicon ? concatKey(gene, chr, Long.toString(start), Long.toString(end), Long.toString(len)) : gene ;
-                        addSample(samples, key, sample, chr, start, end, len, depth, gene);
-                    
-                    
-                
-            
-        
-        }
-        //System.out.print("Count of genes:" + count);
-    }
-
-    private void addGene(Map<String, Gene> map, String sample,  String gene, String chr, long start, long end, String tag, long len, double depth) {
-
+    private void addGene(Map<String, Gene> map, String sample, String gene, String chr, long start, long end, String tag, long len, double depth) {
 
         if (map.containsKey(gene)) {
             Gene geneObj = map.get(gene);
-            //move start
+            // move start
             if (geneObj.getStart() > start) {
                 geneObj.setStart(start);
             }
-            //move end
+            // move end
             if (geneObj.getEnd() < end) {
                 geneObj.setEnd(end);
             }
-            //update length
+            // update length
             geneObj.setLen(geneObj.getLen() + len);
         } else {
-            Gene geneObj = new Gene(sample,gene, chr, start, end, tag,len, depth);
+            Gene geneObj = new Gene(sample, gene, chr, start, end, tag, len, depth);
             map.put(gene, geneObj);
         }
     }
@@ -296,14 +281,14 @@ public class Cov2lr {
     }
 
     private ArrayList<Sample> printResult(List<String> bad) {
-        ArrayList<Sample> sampleArr = new ArrayList<>(); 
+        ArrayList<Sample> sampleArr = new ArrayList<>();
         for (Map.Entry<String, Map<String, Sample>> entry : samples.entrySet()) {
             if (!bad.contains(entry.getKey())) {
                 for (Map.Entry<String, Sample> entrySample : entry.getValue().entrySet()) {
                     Sample sample = entrySample.getValue();
-                    String title = amplicon ? entry.getKey() : sample.getTitle(genes.get(sample.getGene()));
-                    String result = sample.getResultString(title);
-                    
+//                    String title = amplicon ? entry.getKey() : sample.getTitle(genes.get(sample.getGene()));
+//                    String result = sample.getResultString(title);
+
                     if (useControlSamples) {
                         sample = addControlSamples(sample);
                     }
@@ -324,32 +309,27 @@ public class Cov2lr {
         }
         if (!list.isEmpty()) {
             double meanVal = mean.evaluate(toDoubleArray(list));
-            
+
             sample.setNorm3s( meanVal == 0 ? sample.getNorm1b() / meanVal / log.value(2) : 0);
         }
         return sample;
     }
 
     private void setNorm(double medDepth, List<String> bad, Map<String, Double> factor2, Map<String, Double> sampleMedian) {
-        //int count = 0;
-        //System.out.println("!!!!!!!!!!!!!!!!!!!!!");
         for (Map.Entry<String, Map<String, Sample>> entry : samples.entrySet()) {
             if (!bad.contains(entry.getKey())) {
                 for (Map.Entry<String, Sample> entrySample : entry.getValue().entrySet()) {
-                    //count ++;
                     Sample sample = entrySample.getValue();
                     double norm1 = sample.getNorm1();
-                    //System.out.println("samples:" + sample.getName() + " " + norm1);
                     double fact2 = factor2.get(entry.getKey());
                     double smplMed = sampleMedian.get(sample.getSample());
                     sample.setNorm1b(Precision.round(norm1 * fact2 + 0.1, 2));
-                    sample.setNorm2(Precision.round(medDepth != 0 ? log.value((norm1 * fact2 + 0.1) / medDepth) / log.value(2) : 0 , 2));
-                    sample.setNorm3(Precision.round(smplMed != 0 ? log.value((norm1 * fact2 + 0.1) / smplMed) / log.value(2) : 0 , 2));
+                    sample.setNorm2(Precision.round(medDepth != 0 ? log.value((norm1 * fact2 + 0.1) / medDepth) / log.value(2) : 0, 2));
+                    sample.setNorm3(Precision.round(smplMed != 0 ? log.value((norm1 * fact2 + 0.1) / smplMed) / log.value(2) : 0, 2));
 
                 }
             }
         }
-    //System.out.println("Count of samples:" + count);
     }
 
     private Map<String, Double> getSampleMedian(Set<String> samp, List<String> bad) {
@@ -414,16 +394,14 @@ public class Cov2lr {
         return median.evaluate(depth);
     }
 
-   
-    private double filterData(Set<String> sampleSet, Map<String, Sample> map, List<Double> list) {
 
+    private double filterData(Set<String> sampleSet, Map<String, Sample> map, List<Double> list) {
         for (String sample : sampleSet) {
             if (map.containsKey(sample)) {
                 list.add(map.get(sample).getNorm1());
             }
         }
-        double[] result = toDoubleArray(list) ;
-        return new Percentile().evaluate(result, 80);
+        return new Percentile().evaluate(toDoubleArray(list), 80);
     }
 
     private double[] toDoubleArray(List<Double> list) {
@@ -435,12 +413,15 @@ public class Cov2lr {
         return array;
     }
 
-    private String concatKey(String ... array) {
+    private static String join(String delim, Object... array) {
         StringBuilder builder = new StringBuilder();
-        for (String s : array) {
-            builder.append(s).append(" ");
+        for (Object s : array) {
+            if (builder.length() > 0) {
+                builder.append(delim);
+            }
+            builder.append(s);
         }
-        return builder.toString().trim();
+        return builder.toString();
     }
 
 }
