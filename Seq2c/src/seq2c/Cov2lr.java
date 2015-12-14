@@ -111,11 +111,8 @@ public class Cov2lr {
      */
 
     public ArrayList<Sample> doWork() {
-        double[] depth = new double[samples.size()];
-
         Set<String> samp = new HashSet<>();
-
-        double medDepth = getMedDepth(depth, samp);
+        double medDepth = getMedDepth(samp);
 
         List<String> bad = new LinkedList<>();
         List<Double> gooddepth = new LinkedList<>();
@@ -377,8 +374,8 @@ public class Cov2lr {
         }
     }
 
-    private double getMedDepth(double[] depth, Set<String> samp) {
-        int i = 0;
+    private double getMedDepth(Set<String> samp) {
+        List<Double> depth = new ArrayList<>();
         for (Map.Entry<String, Map<String, Sample>> entry: samples.entrySet()) {
             Map<String, Sample> sampleMap =  entry.getValue();
 
@@ -387,11 +384,12 @@ public class Cov2lr {
                 double norm1 = Precision.round((sample.getCov() * factor.get(sample.getSample())), 2);
                 //System.out.println("norm1" + sample.getName() + " " + sample.getCov() + " " + factor.get(sample.getSample()));
                 sample.setNorm1(norm1);
-                depth[i++] = norm1;
+                //depth[i++] = norm1;
+                depth.add(norm1);
                 samp.add(sample.getSample());
             }
         }
-        return median.evaluate(depth);
+        return median.evaluate(toDoubleArray(depth));
     }
 
 
