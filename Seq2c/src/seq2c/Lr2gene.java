@@ -51,7 +51,17 @@ private void Lr2gene_mainloop() {
         locArr[0] = sqr.getChr();
         locArr[1] = String.valueOf(sqr.getStart());
         locArr[2] = String.valueOf(sqr.getEnd());
-        locArr[3] = String.valueOf(sqr.getEnd() - sqr.getStart() + 1);
+        //locArr[3] = String.valueOf(sqr.getEnd() - sqr.getStart() + 1);
+        long len = sqr.getEnd() - sqr.getStart() + 1;
+        //implemented according to perl variant: the length of one gene is summed up
+        //delete this block, if length of gene should not be summed up
+        if (loc.containsKey(sqr.getGene())) {
+            String[] prev = loc.get(sqr.getGene());
+            len += Long.valueOf(prev[3]);
+            locArr[3] = String.valueOf(len);
+        }
+        //end
+        locArr[3] =  String.valueOf(len);
         HashMap<String,ArrayList<Sample>> gq;
         ArrayList<Sample> sq2amparr;
         if(g2amp.containsKey(sqr.getSample())){
@@ -110,14 +120,14 @@ private void Lr2gene_mainloop() {
             lr_med = lr.get(0);
         }
         Sig sig = checkBP(sq2amparr);
-        if(sig == null){
-            System.out.println("Null sig" + lr.size());
+        if(sig == null || Double.compare(sig.getSig(), -1.0) == 0){
+            //System.out.println("Null sig" + lr.size());
             if(lr_med > AMP){
-                System.out.println("Null Sig >AMP");
+                //System.out.println("Null Sig >AMP");
                 sig = new Sig(0.0,0.0,(double)lr.size(),"Whole",lr_med,"Amp",lr.size(),0.0,"ALL",lr_med);
             }else if(lr_med <= DEL){
                 sig = new Sig(0.0,0.0,(double)lr.size(),"Whole",lr_med,"Del",lr.size(),0.0,"ALL",lr_med);
-                System.out.println("Null Sig <= Del");
+                //System.out.println("Null Sig <= Del");
             }
         }
         String regexp = "\\d"; 
