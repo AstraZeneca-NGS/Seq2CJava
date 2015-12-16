@@ -1,5 +1,7 @@
 package seq2c;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -23,12 +25,12 @@ import org.apache.commons.math3.util.Precision;
 public class Cov2lr {
     /**
      * Help utils for statistics
-    */
+     */
     private Log log = new Log();
     private Median median = new Median();
     private Mean mean = new Mean();
     /**
-      *  Indicate this is amplicon or exon based calling.  By default, it'll aggregate at gene level.
+     *  Indicate this is amplicon or exon based calling.  By default, it'll aggregate at gene level.
      */
     private boolean amplicon;
 
@@ -38,7 +40,7 @@ public class Cov2lr {
     private boolean useControlSamples;
 
     /**
-      *  Array of control samples
+     *  Array of control samples
      */
     private String[] controlSamples;
 
@@ -51,10 +53,10 @@ public class Cov2lr {
     private Map<String, Long> mappingReads;
 
     /**
-      *  Normalization factor for each sample
-      *  calculated as mean number of reads / number of reads per sample
-      *  Key = name of sample
-      *  Value = factor
+     *  Normalization factor for each sample
+     *  calculated as mean number of reads / number of reads per sample
+     *  Key = name of sample
+     *  Value = factor
      */
     private Map<String, Double> factor;
     /**
@@ -80,10 +82,6 @@ public class Cov2lr {
     /**
      * Constructor reads the input files and constructs genes, samples, factor maps
      * @param amplicon  =   determines the aggregation level (gene or record)
-     * @param fileStat  =   A file containing # of mapped or sequenced reads for samples.  At least two columns.
-     *                      First is the sample name, 2nd is the number of mapped or sequenced reads.
-     * @param fileCov   =   The coverage output file from checkCov.pl script.  Can also take from standard in or more than
-     *                      one file.
      * @param useControlSamples = use the control sample(s)
      * @param controlSamples     = multiple controls are allowed, which are separated by ":"
      *
@@ -104,7 +102,6 @@ public class Cov2lr {
         }
     }
 
-
     /**
      * Main method, makes the statistics calculation according to the algorithm
      * print result to the Standart output
@@ -113,63 +110,50 @@ public class Cov2lr {
     public ArrayList<Sample> doWork() {
         Set<String> samp = new HashSet<>();
         double medDepth = getMedDepth(samp);
-
         List<String> bad = new LinkedList<>();
         List<Double> gooddepth = new LinkedList<>();
-
         splitQualitySamples(samp, medDepth, bad, gooddepth);
-
         medDepth = median.evaluate(toDoubleArray(gooddepth));
-
         Map<String, Double> factor2 = new LinkedHashMap<>();
-
         setFactor2(medDepth, bad, factor2);
-
         Map<String, Double> sampleMedian = getSampleMedian(samp, bad);
-
         setNorm(medDepth, bad, factor2, sampleMedian);
-
         return printResult(bad);
     }
 
-
-//    private Map<String, Long> readStat(String fileName) {
-//        Map<String, Long> map = new LinkedHashMap<>();
-//        try (BufferedReader reader= new BufferedReader(new FileReader(fileName))) {
-//            String line;
-//            while ((line = reader.readLine()) != null) {
-//                String[] samples = line.split("\\s+");
-//                if (samples.length == 2) {
-//                    map.put(samples[0], Long.parseLong(samples[1]));
-//                }
-//            }
-//        } catch (IOException e) {
-//            System.err.println("Cannot open file " + fileName);
-//        } catch (NumberFormatException e) {
-//            System.err.println("Cannot parse long number");
-//        }
-//        return map;
-//    }
+    private Map<String, Long> readStat(String fileName) {
+        Map<String, Long> map = new LinkedHashMap<>();
+        try (BufferedReader reader= new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] samples = line.split("\\s+");
+                if (samples.length == 2) {
+                    map.put(samples[0], Long.parseLong(samples[1]));
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Cannot open file " + fileName);
+        } catch (NumberFormatException e) {
+            System.err.println("Cannot parse long number");
+        }
+        return map;
+    }
 
     private void readCoverage(Collection<Gene> genesArray, Map<String, Gene> genes, Map<String, Map<String, Sample>> samples) {
-
-        for (Gene gn : genesArray) {
-            if (gn.getTag().contains("Whole")) {
-                continue;
-            }
-
+        for(Gene gn: genesArray) {
+            if(gn.getTag().contains("Whole")) continue;
+            //skip lines with words "Sample, Whole, Control, Undertermined
             String sample = gn.getSample();
-            String gene = gn.getName();
+            String gene =  gn.getName();
             String chr = gn.getChr();
             String tag = gn.getTag();
             long start = gn.getStart();
             long end = gn.getEnd();
             long len = gn.getLen();
             double depth = gn.getDepth();
-            addGene(genes, sample, gene, chr, start, end, tag, len, depth);
-            String key = amplicon ? join(gene, chr, start, end, len) : gene;
-            addSample(samples, key, sample, chr, start, end, len, depth, gene);
-
+            addGene(genes, sample, gene, chr, start, end, tag, len, Precision.round(depth,2));
+            String key = amplicon ? join(" ", gene, chr, Long.toString(start), Long.toString(end), Long.toString(len)) : gene ;
+            addSample(samples, key, sample, chr, start, end, len, Precision.round(depth, 2), gene);
         }
     }
 
@@ -194,14 +178,12 @@ public class Cov2lr {
     }
 
     private void addSample(Map<String, Map<String, Sample>> map, String key, String sample, String chr, Long start, long end, long len, double depth, String gene) {
-
         if (map.containsKey(key)) {
             Map<String, Sample> sampleMap = map.get(key);
             if (sampleMap.containsKey(sample)) {
                 Sample sampleObj = sampleMap.get(sample);
                 sampleObj.addLen(len);
                 sampleObj.addCov(depth);
-                //System.out.println("addcov: "+ gene +" "+ depth);
             } else {
                 Sample sampleObj = new Sample(key, sample, chr, start, end, gene, len, depth);
                 sampleMap.put(sample, sampleObj);
@@ -211,7 +193,6 @@ public class Cov2lr {
             Map<String, Sample> sampleMap = new LinkedHashMap<>();
             sampleMap.put(sample, sampleObj);
             map.put(key, sampleMap);
-
         }
     }
 
@@ -283,18 +264,14 @@ public class Cov2lr {
             if (!bad.contains(entry.getKey())) {
                 for (Map.Entry<String, Sample> entrySample : entry.getValue().entrySet()) {
                     Sample sample = entrySample.getValue();
-//                    String title = amplicon ? entry.getKey() : sample.getTitle(genes.get(sample.getGene()));
-//                    String result = sample.getResultString(title);
-
                     if (useControlSamples) {
                         sample = addControlSamples(sample);
                     }
                     sampleArr.add(sample);
-                    //System.out.println(result);
                 }
             }
         }
-    return sampleArr;
+        return sampleArr;
     }
 
     private Sample addControlSamples(Sample sample) {
@@ -321,9 +298,8 @@ public class Cov2lr {
                     double fact2 = factor2.get(entry.getKey());
                     double smplMed = sampleMedian.get(sample.getSample());
                     sample.setNorm1b(Precision.round(norm1 * fact2 + 0.1, 2));
-                    sample.setNorm2(Precision.round(medDepth != 0 ? log.value((norm1 * fact2 + 0.1) / medDepth) / log.value(2) : 0, 2));
-                    sample.setNorm3(Precision.round(smplMed != 0 ? log.value((norm1 * fact2 + 0.1) / smplMed) / log.value(2) : 0, 2));
-
+                    sample.setNorm2(Precision.round(medDepth != 0 ? log.value((norm1 * fact2 + 0.1) / medDepth) / log.value(2) : 0 , 2));
+                    sample.setNorm3(Precision.round(smplMed != 0 ? log.value((norm1 * fact2 + 0.1) / smplMed) / log.value(2) : 0 , 2));
                 }
             }
         }
@@ -378,13 +354,10 @@ public class Cov2lr {
         List<Double> depth = new ArrayList<>();
         for (Map.Entry<String, Map<String, Sample>> entry: samples.entrySet()) {
             Map<String, Sample> sampleMap =  entry.getValue();
-
             for(Map.Entry<String, Sample> sampleEntry : sampleMap.entrySet()) {
                 Sample sample = sampleEntry.getValue();
                 double norm1 = Precision.round((sample.getCov() * factor.get(sample.getSample())), 2);
-                //System.out.println("norm1" + sample.getName() + " " + sample.getCov() + " " + factor.get(sample.getSample()));
                 sample.setNorm1(norm1);
-                //depth[i++] = norm1;
                 depth.add(norm1);
                 samp.add(sample.getSample());
             }
@@ -399,7 +372,9 @@ public class Cov2lr {
                 list.add(map.get(sample).getNorm1());
             }
         }
-        return new Percentile().evaluate(toDoubleArray(list), 80);
+        double[] result = toDoubleArray(list);
+        Percentile perc = new Percentile(80).withEstimationType(Percentile.EstimationType.R_5);
+        return perc.evaluate(result);
     }
 
     private double[] toDoubleArray(List<Double> list) {
@@ -423,4 +398,3 @@ public class Cov2lr {
     }
 
 }
-
