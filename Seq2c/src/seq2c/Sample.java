@@ -1,10 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package seq2c;
-
 
 /**
  * Created by Mariia_Zueva on 11/25/2015.
@@ -36,7 +30,7 @@ public class Sample {
         this.chr = chr;
     }
 
-     public long getStart() {
+    public long getStart() {
         return this.start;
     }
 
@@ -52,7 +46,6 @@ public class Sample {
         this.end = end;
     }
 
-    
     public String getSample() {
         return sample;
     }
@@ -75,8 +68,6 @@ public class Sample {
 
     public long getLen() {
         return len;
-
-
     }
 
     public void addLen(long len) {
@@ -160,7 +151,8 @@ public class Sample {
     }
 
     /**
-     * @param chr the chr to set
+     * @param chr
+     *            the chr to set
      */
     public void setChr(String chr) {
         this.chr = chr;
@@ -174,7 +166,8 @@ public class Sample {
     }
 
     /**
-     * @param norm3s the norm3s to set
+     * @param norm3s
+     *            the norm3s to set
      */
     public void setNorm3s(double norm3s) {
         this.norm3s = norm3s;

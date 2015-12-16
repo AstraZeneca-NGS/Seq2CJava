@@ -18,7 +18,7 @@ import java.util.Map;
  * @author Petr_Rastegaev
  */
 public class Bam2Reads {
-    
+
     /**
      * Reads a map of sample name/bam filename from fileIn. For each bam file reads its indices,
      * using samtools and gets a number of aligned records from index information.
@@ -29,13 +29,13 @@ public class Bam2Reads {
      *
      * @param fileIn  contains list of sample names and bam files to process,
      *                each line in file represent one file
-     * 
+     *
      */
 
     public static Map<String, Long> printStatsToFile(String fileIn) {
         Map<String, String> files = parseFile(fileIn);
         Map<String, Long> result = new LinkedHashMap<>();
-        
+
             for (Map.Entry<String, String> entry : files.entrySet()) {
                 //writer.write(entry.getKey() + "\t");
                 //System.out.println(entry.getKey() + "\t" + entry.getValue());
@@ -70,7 +70,7 @@ public class Bam2Reads {
     public static Map<String, String> parseFile(String fileName) {
         Map<String, String> map = new LinkedHashMap<>();
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(new File(fileName)))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String currentLine;
             while ((currentLine = reader.readLine()) != null) {
                 String[] samples = currentLine.split("\\s+");
