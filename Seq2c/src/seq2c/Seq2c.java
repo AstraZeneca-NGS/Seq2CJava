@@ -30,7 +30,7 @@ public class Seq2c {
 
         final int threadsCnt = Runtime.getRuntime().availableProcessors();
 
-        Dispatcher.init(1);
+        Dispatcher.init(threadsCnt);
         try {
 
             final Map<String, String> sam2bam = Bam2Reads.parseFile(sam2bamFile);
