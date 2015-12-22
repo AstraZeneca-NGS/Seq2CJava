@@ -37,8 +37,6 @@ public class Bam2Reads {
         Map<String, Long> result = new LinkedHashMap<>();
 
             for (Map.Entry<String, String> entry : files.entrySet()) {
-                //writer.write(entry.getKey() + "\t");
-                //System.out.println(entry.getKey() + "\t" + entry.getValue());
                 try (SamReader sam = SamReaderFactory.makeDefault().open(new File(entry.getValue()))) {
 
                     SamReader.Indexing ind = sam.indexing();
@@ -48,10 +46,7 @@ public class Bam2Reads {
                         BAMIndexMetaData meta = index.getMetaData(i);
                         count += meta.getAlignedRecordCount();
                     }
-                    //System.out.println(entry.getKey()+" "+ count);
                     result.put(entry.getKey(), count);
-                    //writer.write(count + "\n");
-                    //writer.flush();
                 } catch (IOException e) {
                     System.err.println("Cannot read file " + entry.getValue());
                 }
