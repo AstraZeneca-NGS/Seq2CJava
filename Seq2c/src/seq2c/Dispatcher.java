@@ -13,6 +13,10 @@ public class Dispatcher {
             throw new RuntimeException("Dispatcher is initialized");
         }
 
+        if (threadsCount <= 0) {
+            return;
+        }
+
         es = new ThreadPoolExecutor(threadsCount, threadsCount,
                 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<Runnable>());
