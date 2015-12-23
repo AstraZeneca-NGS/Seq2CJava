@@ -10,10 +10,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import htsjdk.samtools.*;
@@ -87,19 +84,16 @@ public class Seq2cov {
         Service service = Dispatcher.getService(workersCount);
         Collection<Gene> resultBam = workersCount > 1 ? new ConcurrentLinkedDeque<Gene>() : new ArrayList<Gene>();
 
-        BlockingQueue<Worker> workers = new LinkedBlockingQueue<>(workersCount);
-        for (int i = 0; i < workersCount; i++) {
-            workers.add(new Worker(SamReaderFactory.makeDefault().open(new File(bamfileName))));
-        }
+        BlockingQueue<Worker> workers = new LinkedBlockingQueue<>();
+        workers.add(new Worker(SamReaderFactory.makeDefault().open(new File(bamfileName))));
         boolean genome = isHGenome(workers.peek().sam.getFileHeader().getSequenceDictionary().getSequences());
 
         for (Seq2covGene gn : resultBed.values()) {
             GeneCtx ctx = new GeneCtx(gn, service, workers, resultBam, sampleName, PCRamplbc, genome);
-            ctx.process();
+            ctx.process(bamfileName);
         }
 
         service.await();
-
 
         for (Worker worker : workers) {
             worker.sam.close();
@@ -147,7 +141,7 @@ public class Seq2cov {
             this.chr = getChrName(isHGenome, gene);
         }
 
-        public void process() throws InterruptedException {
+        public void process(String bamfileName) throws InterruptedException {
             int workerNumber = 0;
             for (int[] region : gene.CDS) {
                 final int rStart = region[0];
@@ -159,7 +153,10 @@ public class Seq2cov {
                 if (rEnd > end) {
                     end = rEnd;
                 }
-                Worker worker = workers.take();
+                Worker worker = workers.poll();
+                if(worker == null) {
+                    worker = new Worker(SamReaderFactory.makeDefault().open(new File(bamfileName)));
+                }
                 worker.ctx = this;
                 worker.numer = workerNumber++;
                 worker.region = region;

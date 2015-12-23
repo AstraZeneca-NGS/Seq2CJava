@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -19,16 +21,22 @@ public class Seq2c {
         String seq2copt = "";
 
         if (args.length > 2) {
-            control = args[2];
+            if(!args[2].startsWith("-")) {
+                control = args[2];
+            }
+            StringBuilder builder = new StringBuilder();
+            for (int i = 2; i < args.length; i++) {
+                if (builder.length() > 0) {
+                    builder.append(' ');
+                }
+                builder.append(args[i]);
+            }
+            seq2copt = builder.toString();
         }
 
-        if (args.length > 3) {
-            seq2copt = args[3];
-        }
+        final boolean controlFlag = control.isEmpty() ? false : true;
 
-        boolean controlFlag = control.isEmpty() ? false : true;
-
-        final int threadsCnt = Runtime.getRuntime().availableProcessors();
+        final int threadsCnt = getThreadsCount(seq2copt);
 
         Dispatcher.init(threadsCnt);
         try {
@@ -36,7 +44,6 @@ public class Seq2c {
             final Map<String, String> sam2bam = Bam2Reads.parseFile(sam2bamFile);
 
             final Collection<Gene> sqrlist = new ArrayList<>();
-
             for (final Map.Entry<String, String> entry : sam2bam.entrySet()) {
                 Seq2cov sec2cov = new Seq2cov(bedFile, entry.getValue(), entry.getKey());
                 Collection<Gene> cov = sec2cov.process();
@@ -49,10 +56,28 @@ public class Seq2c {
             List<Sample> cov = cov2lr.doWork();
 
             new Lr2gene(cov, seq2copt, controlFlag).run();
-        } finally {
 
+        } finally {
             Dispatcher.shutdown();
         }
+
+    }
+
+    private static final Pattern threadsOpt = Pattern.compile("-i\\s*(\\d+)?");
+    private static int getThreadsCount(String opts) {
+        if(opts.isEmpty()) {
+            return 0;
+        }
+
+        Matcher matcher = threadsOpt.matcher(opts);
+        if (matcher.find()) {
+            String num = matcher.group(1);
+            if (num == null) {
+                return Runtime.getRuntime().availableProcessors();
+            }
+            return Integer.parseInt(num);
+        }
+        return 0;
 
     }
 

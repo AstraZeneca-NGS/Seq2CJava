@@ -505,12 +505,11 @@ public class Lr2gene {
         }
         return ret;
     }
+    private static final Pattern optsPattern = Pattern.compile("-(\\w+)\\s+(\\d*\\.?\\d*)");
 
     private void getOpt(String opt) {
         if (!opt.isEmpty()) {
-            String regexp = "-(\\w+)\\s+(\\d*\\.?\\d*)";
-            Pattern pattern = Pattern.compile(regexp);
-            Matcher matcher = pattern.matcher(opt);
+            Matcher matcher = optsPattern.matcher(opt);
             while (matcher.find()) {
                 switch (matcher.group(1)) {
                     case "M":
