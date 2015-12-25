@@ -35,10 +35,6 @@ public class Cov2lr {
      */
     private boolean amplicon;
 
-    /**
-     * Use the control sample(s)
-     */
-    private boolean useControlSamples;
 
     /**
      *  Array of control samples
@@ -88,17 +84,15 @@ public class Cov2lr {
      *
      */
 
-    public Cov2lr(boolean amplicon, Map<String, Long> stat, Collection<Gene> genesArray, boolean useControlSamples, String controlSamples) {
+    public Cov2lr(boolean amplicon, Map<String, Long> stat, Collection<Gene> genesArray, String controlSamples) {
         this.amplicon = amplicon;
-        this.useControlSamples = false;
         this.mappingReads = stat;
         this.genes = new LinkedHashMap<>();
         this.samples = new LinkedHashMap<>();
         readCoverage(genesArray, this.genes, this.samples);
         this.factor = new LinkedHashMap<>();
         setFactor();
-        this.useControlSamples = useControlSamples;
-        if (useControlSamples) {
+        if (controlSamples != null && !controlSamples.trim().isEmpty()) {
             this.controlSamples = controlSamples.split(":");
         }
     }
@@ -264,6 +258,7 @@ public class Cov2lr {
     }
 
     private ArrayList<Sample> printResult() {
+        boolean useControlSamples = isUseControlSamples();
         ArrayList<Sample> sampleArr = new ArrayList<>();
         for (Map.Entry<String, Map<String, Sample>> entry : samples.entrySet()) {
             for (Map.Entry<String, Sample> entrySample : entry.getValue().entrySet()) {
@@ -275,6 +270,10 @@ public class Cov2lr {
             }
         }
         return sampleArr;
+    }
+
+    public boolean isUseControlSamples() {
+        return controlSamples != null && controlSamples.length > 0;
     }
 
     private Sample addControlSamples(Sample sample) {

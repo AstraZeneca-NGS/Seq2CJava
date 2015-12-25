@@ -8,6 +8,7 @@ repositories  {
 }
 
 dependencies {
+    compile 'commons-cli:commons-cli:1.2' 
     compile('com.github.samtools:htsjdk:1.140') {
         transitive = false
     }

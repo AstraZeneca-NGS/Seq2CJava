@@ -1,10 +1,11 @@
 package com.astrazeneca.seq2c;
 
 import java.util.*;
-import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.math3.stat.*;
+
+import org.apache.commons.cli.*;
+import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.inference.TTest;
 
 /**
@@ -12,6 +13,7 @@ import org.apache.commons.math3.stat.inference.TTest;
  * @author Petr_Rastegaev
  */
 public class Lr2gene {
+
     private List<Sample> inputGenes;
     private double MINMAD = 10;
     private double MINDIFF = 0.7;
@@ -25,21 +27,35 @@ public class Lr2gene {
     private double TTPVALUE = 0.000001;
     private double MINBPEXONS = 8;
     private double MINSEGS = 1;
-    private String seq2copt;
     private boolean useControl;
+    private static final Lr2gene DEFAULTS = new Lr2gene();
 
-    public Lr2gene(List<Sample> sq, String opt, boolean useControl) {
+    private Lr2gene() {
+    }
+
+
+    public static void main(String[] args) throws ParseException {
+        CommandLine cmd = buildCommandLine(args);
+
+        //TODO
+        if (cmd.getArgList().isEmpty()) {
+            help(getOptions());
+        }
+        String fileName = cmd.getArgs()[0];
+        List<Sample> samples = new ArrayList<>();
+
+        Lr2gene lr2gene = new Lr2gene(samples);
+        lr2gene.init(cmd);
+        lr2gene.process();
+    }
+
+
+
+    public Lr2gene(List<Sample> sq) {
         this.inputGenes = sq;
-        this.seq2copt = opt;
-        this.useControl = useControl;
     }
 
-    public void run() {
-        Lr2gene_mainloop();
-    }
-
-    private void Lr2gene_mainloop() {
-        getOpt(seq2copt);
+    public void process() {
         Map<String, HashMap<String, ArrayList<Sample>>> g2amp = new HashMap<>();
         Map<String, String[]> loc = new HashMap<>();
 
@@ -495,6 +511,16 @@ public class Lr2gene {
         return result;
     }
 
+
+    public boolean isUseControl() {
+        return useControl;
+    }
+
+    public void setUseControl(boolean useControl) {
+        this.useControl = useControl;
+    }
+
+
     private double[] convertDoubles(List<Double> doubles) {
         double[] ret = new double[doubles.size()];
         Iterator<Double> iterator = doubles.iterator();
@@ -505,54 +531,142 @@ public class Lr2gene {
         }
         return ret;
     }
-    private static final Pattern optsPattern = Pattern.compile("-(\\w+)\\s+(\\d*\\.?\\d*)");
-
-    private void getOpt(String opt) {
-        if (!opt.isEmpty()) {
-            Matcher matcher = optsPattern.matcher(opt);
-            while (matcher.find()) {
-                switch (matcher.group(1)) {
-                    case "M":
-                        this.MINMAD = Double.parseDouble(matcher.group(2));
-                        break;
-                    case "d":
-                        this.MINDIFF = Double.parseDouble(matcher.group(2));
-                        break;
-                    case "p":
-                        this.PVALUE = Double.parseDouble(matcher.group(2));
-                        break;
-                    case "A":
-                        this.AMP = Double.parseDouble(matcher.group(2));
-                        break;
-                    case "D":
-                        this.DEL = Double.parseDouble(matcher.group(2));
-                        break;
-                    case "E":
-                        this.EXONDIFF = Double.parseDouble(matcher.group(2));
-                        break;
-                    case "R":
-                        this.MAXRATE = Double.parseDouble(matcher.group(2));
-                        break;
-                    case "N":
-                        this.MAXCNT = Double.parseDouble(matcher.group(2));
-                        break;
-                    case "t":
-                        this.MINTTDIFF = Double.parseDouble(matcher.group(2));
-                        break;
-                    case "P":
-                        this.TTPVALUE = Double.parseDouble(matcher.group(2));
-                        break;
-                    case "e":
-                        this.MINBPEXONS = Double.parseDouble(matcher.group(2));
-                        break;
-
-                    default:
-                        break;
-                }
 
 
-            }
+
+    public void init(CommandLine cmd) throws ParseException {
+        MINMAD = getDoubleValue(cmd, "M", DEFAULTS.MINMAD);
+        MINDIFF = getDoubleValue(cmd, "d", DEFAULTS.MINDIFF);
+        PVALUE = getDoubleValue(cmd, "p", DEFAULTS.PVALUE);
+        AMP = getDoubleValue(cmd, "A", DEFAULTS.AMP);
+        DEL = getDoubleValue(cmd, "D", DEFAULTS.DEL);
+        EXONDIFF = getDoubleValue(cmd, "E", DEFAULTS.EXONDIFF);
+        MAXRATE = getDoubleValue(cmd, "R", DEFAULTS.MAXRATE);
+        MAXCNT = (int)getDoubleValue(cmd, "N", DEFAULTS.MAXCNT);
+        MINTTDIFF = getDoubleValue(cmd, "t", DEFAULTS.MINTTDIFF);
+        TTPVALUE = getDoubleValue(cmd, "P", DEFAULTS.TTPVALUE);
+        MINBPEXONS = getDoubleValue(cmd, "e", DEFAULTS.MINBPEXONS);
+        if (cmd.hasOption("c")) {
+            useControl = true;
         }
+    }
+
+    private static void help(Options options) {
+        HelpFormatter formater = new HelpFormatter();
+        formater.setOptionComparator(null);
+        formater.printHelp(142,
+                Lr2gene.class.getSimpleName() + " [-aPH] [-c control] [-F float] [-s min_amplicon_#] [-A float] [-D float] mapping_reads coverage.txt\n\n"
+                        + "The " + Lr2gene.class.getSimpleName() + " program will convert a coverage file to copy number profile.",
+
+                "\nArguments are:\n"
+                        + "mapping_reads: Required. A file containing # of mapped or sequenced reads for samples.  At least two columns.\n"
+                        + "               First is the sample name, 2nd is the number of mapped or sequenced reads.\n"
+                        + "coverage.txt:  The coverage output file from checkCov.pl script.  Can also take from standard in or more than\n"
+                        + "               one file.\n\n",
+                options,
+                "\nAUTHOR\n"
+                        + "       Written by Zhongwu Lai, AstraZeneca, Boston, USA\n\n"
+                        + "REPORTING BUGS\n"
+                        + "       Report bugs to zhongwu@yahoo.com\n\n"
+                        + "COPYRIGHT\n"
+                        + "       This is free software: you are free to change and redistribute it.  There is NO WARRANTY, to the extent permitted by law.");
+
+        System.exit(0);
+
+    }
+
+    public static CommandLine buildCommandLine(String[] args) throws ParseException {
+        Options options = getOptions();
+        CommandLineParser parser = new BasicParser();
+        CommandLine cmd = parser.parse(options, args);
+        return cmd;
+    }
+
+    public static Options getOptions() {
+        Options options = new Options();
+
+        options.addOption(OptionBuilder.withArgName("float")
+                .hasArg()
+                .withType(Number.class)
+                .withDescription("When considering partial deletions less than 3 exons/amplicons, the minimum MAD value, in addition to -d,\n"
+                        + "before considering it to be amplified or deleted.  Default: " + DEFAULTS.MINMAD)
+                .isRequired(false)
+                .create("M"));
+        options.addOption(OptionBuilder
+                .withDescription("Indidate that control sample is used for normalization")
+                .isRequired(false)
+                .create("c"));
+        options.addOption(OptionBuilder.withArgName("float")
+                .hasArg()
+                .withType(Number.class)
+                .withDescription("When considering >=3 exons deletion/amplification within a gene, the minimum differences between the log2 of two segments.\n"
+                        + "Default: " + DEFAULTS.MINDIFF)
+                .isRequired(false)
+                .create("d"));
+        options.addOption(OptionBuilder.withArgName("float (0-1)")
+                .hasArg()
+                .withType(Number.class)
+                .withDescription("The p-value for t-test when consecutive exons/amplicons are >= 3.  Default: " + String.format("%f", DEFAULTS.PVALUE))
+                .isRequired(false)
+                .create("p"));
+        options.addOption(OptionBuilder.withArgName("float")
+                .hasArg()
+                .withType(Number.class)
+                .withDescription("Minimum log2 ratio for a whole gene to be considered amplified.  Default: " + DEFAULTS.AMP)
+                .isRequired(false)
+                .create("A"));
+        options.addOption(OptionBuilder.withArgName("float")
+                .hasArg()
+                .withType(Number.class)
+                .withDescription("Minimum log2 ratio for a whole gene to be considered deleted.  Default: " + DEFAULTS.DEL)
+                .isRequired(false)
+                .create("D"));
+        options.addOption(OptionBuilder.withArgName("float")
+                .hasArg()
+                .withType(Number.class)
+                .withDescription("Minimum mean log2 ratio difference for <3 exon deletion/amplification to be called.  Default: " + DEFAULTS.EXONDIFF)
+                .isRequired(false)
+                .create("E"));
+        options.addOption(OptionBuilder.withArgName("float (0-1)")
+                .hasArg()
+                .withType(Number.class)
+                .withDescription("If a breakpoint has been detected more than \"float\" fraction of samples, it's considered false positive and removed.\n"
+                        + "Default: " + DEFAULTS.MAXRATE + ", or 10%.  Use in combination with -N")
+                .isRequired(false)
+                .create("R"));
+        options.addOption(OptionBuilder.withArgName("int")
+                .hasArg()
+                .withType(Number.class)
+                .withDescription("If a breakpoint has been detected more than \"int\" samples, it's considered false positives and removed.\n"
+                        + "Default: " + (int)DEFAULTS.MAXCNT + ".  Use in combination with -R.")
+                .isRequired(false)
+                .create("N"));
+        options.addOption(OptionBuilder.withArgName("float")
+                .hasArg()
+                .withType(Number.class)
+                .withDescription("When considering breakpoint in the middle of a gene, the minimum differences between the log2 of two segments."
+                        + "Default: " + DEFAULTS.MINTTDIFF)
+                .isRequired(false)
+                .create("t"));
+        options.addOption(OptionBuilder.withArgName("float (0-1)")
+                .hasArg()
+                .withType(Number.class)
+                .withDescription("The p-value for t-test when the breakpoint is in the middle with min exons/amplicons >= [-e].  Default: " + String.format("%f", DEFAULTS.TTPVALUE))
+                .isRequired(false)
+                .create("P"));
+        options.addOption(OptionBuilder.withArgName("float")
+                .hasArg()
+                .withType(Number.class)
+                .withDescription("When considering breakpoint in the middle of a gene, the minimum number of exons.  Default: " + DEFAULTS.MINBPEXONS)
+                .isRequired(false)
+                .create("e"));
+
+        return options;
+    }
+
+    private static double getDoubleValue(CommandLine cmd, String opt, double defaultValue) throws ParseException {
+        Object value = cmd.getParsedOptionValue(opt);
+        return value == null ? defaultValue : ((Number)value).doubleValue();
     }
 
 }

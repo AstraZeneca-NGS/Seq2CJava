@@ -1,11 +1,8 @@
 package com.astrazeneca.seq2c;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
+
+import org.apache.commons.cli.*;
 
 /**
  *
@@ -15,28 +12,27 @@ public class Seq2c {
 
     public static void main(String[] args) throws Exception {
 
-        String sam2bamFile = args[0];
-        final String bedFile = args[1];
-        String control = "";
-        String seq2copt = "";
 
-        if (args.length > 2) {
-            if(!args[2].startsWith("-")) {
-                control = args[2];
-            }
-            StringBuilder builder = new StringBuilder();
-            for (int i = 2; i < args.length; i++) {
-                if (builder.length() > 0) {
-                    builder.append(' ');
-                }
-                builder.append(args[i]);
-            }
-            seq2copt = builder.toString();
+        Options options = Lr2gene.getOptions();
+        options.addOption(OptionBuilder.withArgName("number of threads")
+                .hasOptionalArg()
+                .withType(Number.class)
+                .isRequired(false)
+                .create("i"));
+
+        CommandLineParser parser = new BasicParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        String[] cmdArgs = cmd.getArgs();
+        String sam2bamFile = cmdArgs[0];
+        final String bedFile = cmdArgs[1];
+        String control = "";
+
+        if (cmdArgs.length > 2) {
+            control = cmdArgs[2];
         }
 
-        final boolean controlFlag = control.isEmpty() ? false : true;
-
-        final int threadsCnt = getThreadsCount(seq2copt);
+        final int threadsCnt = getThreadsCount(cmd);
 
         Dispatcher.init(threadsCnt);
         try {
@@ -52,33 +48,33 @@ public class Seq2c {
 
             Map<String, Long> stat = Bam2Reads.printStatsToFile(sam2bamFile);
 
-            Cov2lr cov2lr = new Cov2lr(true, stat, sqrlist, controlFlag, control);
+            Cov2lr cov2lr = new Cov2lr(true, stat, sqrlist, control);
             List<Sample> cov = cov2lr.doWork();
 
-            new Lr2gene(cov, seq2copt, controlFlag).run();
+            Lr2gene lr2gene = new Lr2gene(cov);
+            lr2gene.init(cmd);
+            lr2gene.setUseControl(cov2lr.isUseControlSamples());
+            lr2gene.process();
 
         } finally {
             Dispatcher.shutdown();
         }
-
     }
 
-    private static final Pattern threadsOpt = Pattern.compile("-i\\s*(\\d+)?");
-    private static int getThreadsCount(String opts) {
-        if(opts.isEmpty()) {
-            return 0;
-        }
 
-        Matcher matcher = threadsOpt.matcher(opts);
-        if (matcher.find()) {
-            String num = matcher.group(1);
-            if (num == null) {
-                return Runtime.getRuntime().availableProcessors();
+    private static int getThreadsCount(CommandLine cmd) throws ParseException {
+        int threads = 0;
+        if (cmd.hasOption("i")) {
+            Object value = cmd.getParsedOptionValue("i");
+            if (value == null) {
+                threads = Runtime.getRuntime().availableProcessors();
+            } else {
+                threads = ((Number)value).intValue();
             }
-            return Integer.parseInt(num);
         }
-        return 0;
+        return threads;
 
     }
+
 
 }
