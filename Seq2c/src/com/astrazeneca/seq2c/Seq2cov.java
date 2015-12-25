@@ -1,4 +1,4 @@
-package seq2c;
+package com.astrazeneca.seq2c;
 
 
 
@@ -13,8 +13,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.astrazeneca.seq2c.Dispatcher.Service;
+
 import htsjdk.samtools.*;
-import seq2c.Dispatcher.Service;
 
 /**
  *

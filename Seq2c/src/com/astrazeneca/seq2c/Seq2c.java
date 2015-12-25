@@ -1,4 +1,4 @@
-package seq2c;
+package com.astrazeneca.seq2c;
 
 import java.util.ArrayList;
 import java.util.Collection;

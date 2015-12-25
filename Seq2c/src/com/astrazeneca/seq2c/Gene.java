@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package seq2c;
+package com.astrazeneca.seq2c;
 
 /**
  * Created by Mariia_Zueva on 11/25/2015.

@@ -1,4 +1,4 @@
-package seq2c;
+package com.astrazeneca.seq2c;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

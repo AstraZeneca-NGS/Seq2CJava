@@ -29,5 +29,5 @@ dependencies {
 
 applicationDefaultJvmArgs = ["-Xmx768m", "-Dsamjdk.buffer_size=524288"]
 
-mainClassName = "seq2c.Seq2c"
+mainClassName = "com.astrazeneca.seq2c.Seq2c"
 

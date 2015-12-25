@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package seq2c;
+package com.astrazeneca.seq2c;
 import htsjdk.samtools.AbstractBAMFileIndex;
 import htsjdk.samtools.BAMIndexMetaData;
 import htsjdk.samtools.SamReader;
