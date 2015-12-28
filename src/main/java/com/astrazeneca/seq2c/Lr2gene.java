@@ -33,11 +33,10 @@ public class Lr2gene {
     private Lr2gene() {
     }
 
-
     public static void main(String[] args) throws ParseException {
         CommandLine cmd = buildCommandLine(args);
 
-        //TODO
+        // TODO
         if (cmd.getArgList().isEmpty()) {
             help(getOptions());
         }
@@ -48,8 +47,6 @@ public class Lr2gene {
         lr2gene.init(cmd);
         lr2gene.process();
     }
-
-
 
     public Lr2gene(List<Sample> sq) {
         this.inputGenes = sq;
@@ -511,7 +508,6 @@ public class Lr2gene {
         return result;
     }
 
-
     public boolean isUseControl() {
         return useControl;
     }
@@ -519,7 +515,6 @@ public class Lr2gene {
     public void setUseControl(boolean useControl) {
         this.useControl = useControl;
     }
-
 
     private double[] convertDoubles(List<Double> doubles) {
         double[] ret = new double[doubles.size()];
@@ -531,8 +526,6 @@ public class Lr2gene {
         }
         return ret;
     }
-
-
 
     public void init(CommandLine cmd) throws ParseException {
         MINMAD = getDoubleValue(cmd, "M", DEFAULTS.MINMAD);
