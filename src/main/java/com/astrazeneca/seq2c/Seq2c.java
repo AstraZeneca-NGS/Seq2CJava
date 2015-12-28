@@ -13,15 +13,7 @@ public class Seq2c {
     public static void main(String[] args) throws Exception {
 
 
-        Options options = Lr2gene.getOptions();
-        options.addOption(OptionBuilder.withArgName("number of threads")
-                .hasOptionalArg()
-                .withType(Number.class)
-                .isRequired(false)
-                .create("i"));
-
-        CommandLineParser parser = new BasicParser();
-        CommandLine cmd = parser.parse(options, args);
+        CommandLine cmd = new BasicParser().parse(buildCmdOptions(), args);
 
         String[] cmdArgs = cmd.getArgs();
         String sam2bamFile = cmdArgs[0];
@@ -32,9 +24,7 @@ public class Seq2c {
             control = cmdArgs[2];
         }
 
-        final int threadsCnt = getThreadsCount(cmd);
-
-        Dispatcher.init(threadsCnt);
+        Dispatcher.init(getThreadsCount(cmd));
         try {
 
             final Map<String, String> sam2bam = Bam2Reads.parseFile(sam2bamFile);
@@ -59,6 +49,17 @@ public class Seq2c {
         } finally {
             Dispatcher.shutdown();
         }
+    }
+
+
+    private static Options buildCmdOptions() {
+        Options options = Lr2gene.getOptions();
+        options.addOption(OptionBuilder.withArgName("number of threads")
+                .hasOptionalArg()
+                .withType(Number.class)
+                .isRequired(false)
+                .create("i"));
+        return options;
     }
 
 
