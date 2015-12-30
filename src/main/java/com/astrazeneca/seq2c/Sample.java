@@ -1,9 +1,7 @@
 package com.astrazeneca.seq2c;
 
-/**
- * Created by Mariia_Zueva on 11/25/2015.
- */
 public class Sample {
+
     private String name;
     private String sample;
     private String gene;

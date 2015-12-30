@@ -6,10 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-/**
- *
- * @author Petr_Rastegaev
- */
 import org.apache.commons.math3.analysis.function.Log;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
@@ -17,10 +13,9 @@ import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.util.Precision;
 
 /**
- *  Normalize the coverage from targeted sequencing to CNV log2 ratio.  The algorithm assumes the medium
- *     is diploid, thus not suitable for homogeneous samples (e.g. parent-child).
+ * Normalize the coverage from targeted sequencing to CNV log2 ratio. The algorithm assumes the medium is diploid, thus not suitable
+ * for homogeneous samples (e.g. parent-child).
  */
-
 
 public class Cov2lr {
     /**
@@ -31,56 +26,50 @@ public class Cov2lr {
     private Mean mean = new Mean();
     private final double LOG_OF_TWO = log.value(2);
     /**
-     *  Indicate this is amplicon or exon based calling.  By default, it'll aggregate at gene level.
+     * Indicate this is amplicon or exon based calling. By default, it'll aggregate at gene level.
      */
     private boolean amplicon;
 
-
     /**
-     *  Array of control samples
+     * Array of control samples
      */
     private String[] controlSamples;
 
-
     /**
-     *   Statistics from first input file
-     *   Key = name of sample
-     *   Value = number of aligned reads
+     * Statistics from first input file Key = name of sample Value = number of aligned reads
      */
     private Map<String, Long> mappingReads;
 
     /**
-     *  Normalization factor for each sample
-     *  calculated as mean number of reads / number of reads per sample
-     *  Key = name of sample
-     *  Value = factor
+     * Normalization factor for each sample calculated as mean number of reads / number of reads per sample Key = name of sample
+     * Value = factor
      */
     private Map<String, Double> factor;
     /**
-     *  Map of genes from second input file
-     *  Key = name of gene
-     *  Value = gene object
+     * Map of genes from second input file Key = name of gene Value = gene object
      */
     private Map<String, Gene> genes;
     /**
-     *  Map of samples
-     *  Key = key for string, consists of sample name, gene name, start, end and length
-     *  Value = map of sample names and sample objects
+     * Map of samples Key = key for string, consists of sample name, gene name, start, end and length Value = map of sample names
+     * and sample objects
      */
     private Map<String, Map<String, Sample>> samples;
 
     /**
-     *  The failed factor for individual amplicons.
-     *  If (the 80th percentile of an amplicon depth)/(the global median depth)
-     *  is less than the argument, the amplicon is considered failed and won't be used in calculation.  Default: 0.2.
+     * The failed factor for individual amplicons. If (the 80th percentile of an amplicon depth)/(the global median depth) is less
+     * than the argument, the amplicon is considered failed and won't be used in calculation. Default: 0.2.
      */
     private final double FAILEDFACTOR = 0.2;
 
     /**
      * Constructor reads the input files and constructs genes, samples, factor maps
-     * @param amplicon  =   determines the aggregation level (gene or record)
-     * @param useControlSamples = use the control sample(s)
-     * @param controlSamples     = multiple controls are allowed, which are separated by ":"
+     *
+     * @param amplicon
+     *            = determines the aggregation level (gene or record)
+     * @param useControlSamples
+     *            = use the control sample(s)
+     * @param controlSamples
+     *            = multiple controls are allowed, which are separated by ":"
      *
      */
 
@@ -98,8 +87,7 @@ public class Cov2lr {
     }
 
     /**
-     * Main method, makes the statistics calculation according to the algorithm
-     * print result to the Standart output
+     * Main method, makes the statistics calculation according to the algorithm print result to the Standart output
      */
 
     public ArrayList<Sample> doWork() {
@@ -116,14 +104,14 @@ public class Cov2lr {
 
         Map<String, Double> sampleMedian = getSampleMedian(samp);
 
-        setNorm(medDepth,factor2, sampleMedian);
+        setNorm(medDepth, factor2, sampleMedian);
 
         return printResult();
     }
 
     private Map<String, Long> readStat(String fileName) {
         Map<String, Long> map = new LinkedHashMap<>();
-        try (BufferedReader reader= new BufferedReader(new FileReader(fileName))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] samples = line.split("\\s+");
@@ -140,21 +128,21 @@ public class Cov2lr {
     }
 
     private void readCoverage(Collection<Gene> genesArray, Map<String, Gene> genes, Map<String, Map<String, Sample>> samples) {
-        for(Gene gn: genesArray) {
-            if(gn.getTag().contains("Whole")) {
+        for (Gene gn : genesArray) {
+            if (gn.getTag().contains("Whole")) {
                 continue;
             }
-            //skip lines with words "Sample, Whole, Control, Undertermined
+            // skip lines with words "Sample, Whole, Control, Undertermined
             String sample = gn.getSample();
-            String gene =  gn.getName();
+            String gene = gn.getName();
             String chr = gn.getChr();
             String tag = gn.getTag();
             long start = gn.getStart();
             long end = gn.getEnd();
             long len = gn.getLen();
             double depth = gn.getDepth();
-            addGene(genes, sample, gene, chr, start, end, tag, len, Precision.round(depth,2));
-            String key = amplicon ? join(" ", gene, chr, Long.toString(start), Long.toString(end), Long.toString(len)) : gene ;
+            addGene(genes, sample, gene, chr, start, end, tag, len, Precision.round(depth, 2));
+            String key = amplicon ? join(" ", gene, chr, Long.toString(start), Long.toString(end), Long.toString(len)) : gene;
             addSample(samples, key, sample, chr, start, end, len, Precision.round(depth, 2), gene);
         }
     }
@@ -216,7 +204,7 @@ public class Cov2lr {
 
         try (FileWriter writer = new FileWriter("java_debug.txt")) {
             writer.write("Factor:" + "\n");
-            for (Map.Entry<String, Double> entry: factor.entrySet()) {
+            for (Map.Entry<String, Double> entry : factor.entrySet()) {
                 writer.write(entry.getKey() + "\t" + entry.getValue() + "\n");
                 writer.flush();
             }
@@ -353,7 +341,7 @@ public class Cov2lr {
                 gooddepth.addAll(temp);
             }
         }
-        for (String s: bad) {
+        for (String s : bad) {
             samples.remove(s);
         }
         return gooddepth;
@@ -361,9 +349,9 @@ public class Cov2lr {
 
     private double getMedDepth(Set<String> samp) {
         List<Double> depth = new ArrayList<>();
-        for (Map.Entry<String, Map<String, Sample>> entry: samples.entrySet()) {
-            Map<String, Sample> sampleMap =  entry.getValue();
-            for(Map.Entry<String, Sample> sampleEntry : sampleMap.entrySet()) {
+        for (Map.Entry<String, Map<String, Sample>> entry : samples.entrySet()) {
+            Map<String, Sample> sampleMap = entry.getValue();
+            for (Map.Entry<String, Sample> sampleEntry : sampleMap.entrySet()) {
                 Sample sample = sampleEntry.getValue();
                 double norm1 = Precision.round((sample.getCov() * factor.get(sample.getSample())), 2);
                 sample.setNorm1(norm1);
@@ -373,7 +361,6 @@ public class Cov2lr {
         }
         return median.evaluate(toDoubleArray(depth));
     }
-
 
     private double filterData(Set<String> sampleSet, Map<String, Sample> map, List<Double> list) {
         for (String sample : sampleSet) {

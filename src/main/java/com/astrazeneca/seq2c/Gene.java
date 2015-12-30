@@ -1,13 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.astrazeneca.seq2c;
 
-/**
- * Created by Mariia_Zueva on 11/25/2015.
- */
 public class Gene {
     private String sample;
     private String name;
@@ -28,18 +20,19 @@ public class Gene {
         this.len = len;
         this.mdepth = mdepth;
     }
-    public double getDepth(){
+
+    public double getDepth() {
         return this.mdepth;
     }
-    public String getSample(){
+
+    public String getSample() {
         return this.sample;
     }
-    
-    public String getTag(){
+
+    public String getTag() {
         return this.tag;
     }
-    
-     
+
     public long getStart() {
         return this.start;
     }
@@ -71,14 +64,13 @@ public class Gene {
     public void setLen(long len) {
         this.len = len;
     }
-    
+
     public void setMdepth(long mdepth) {
         this.mdepth = mdepth;
     }
 
     @Override
     public String toString() {
-        return sample + "\t" + name + "\t" + chr + "\t" + start + "\t" + end + "\t" + tag + "\t" + len + "\t" + String.format("%.2f",mdepth);
+        return sample + "\t" + name + "\t" + chr + "\t" + start + "\t" + end + "\t" + tag + "\t" + len + "\t" + String.format("%.2f", mdepth);
     }
 }
-

@@ -1,17 +1,15 @@
 package com.astrazeneca.seq2c;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.cli.*;
 
-/**
- *
- * @author Petr_Rastegaev
- */
 public class Seq2c {
 
     public static void main(String[] args) throws Exception {
-
 
         CommandLine cmd = new BasicParser().parse(buildCmdOptions(), args);
 
@@ -51,7 +49,6 @@ public class Seq2c {
         }
     }
 
-
     private static Options buildCmdOptions() {
         Options options = Lr2gene.getOptions();
         options.addOption(OptionBuilder.withArgName("number of threads")
@@ -61,7 +58,6 @@ public class Seq2c {
                 .create("i"));
         return options;
     }
-
 
     private static int getThreadsCount(CommandLine cmd) throws ParseException {
         int threads = 0;
@@ -76,6 +72,5 @@ public class Seq2c {
         return threads;
 
     }
-
 
 }

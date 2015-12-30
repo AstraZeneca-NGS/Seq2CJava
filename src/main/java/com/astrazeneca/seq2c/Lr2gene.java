@@ -8,10 +8,6 @@ import org.apache.commons.cli.*;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.inference.TTest;
 
-/**
- *
- * @author Petr_Rastegaev
- */
 public class Lr2gene {
 
     private List<Sample> inputGenes;
@@ -30,8 +26,20 @@ public class Lr2gene {
     private boolean useControl;
     private static final Lr2gene DEFAULTS = new Lr2gene();
 
+    private static final Pattern SLASH_D = Pattern.compile("\\d");
+
+    private static final java.util.Comparator<double[]> DIS_COMPARATOR = new java.util.Comparator<double[]>() {
+        @Override
+        public int compare(double[] a, double[] b) {
+            return Double.compare(a[0], b[0]);
+        }
+    };
+
+
     private Lr2gene() {
     }
+
+
 
     public static void main(String[] args) throws ParseException {
         CommandLine cmd = buildCommandLine(args);
@@ -97,12 +105,10 @@ public class Lr2gene {
             g2amp.put(sqr.getSample(), gq);
             loc.put(sqr.getGene(), locArr);
         }
-        // System.out.println("g2amp " + g2amp.size());
         int j = 0;
         for (Map.Entry<String, HashMap<String, ArrayList<Sample>>> entry : g2amp.entrySet()) {
             String Sample = entry.getKey();
-            HashMap<String, ArrayList<Sample>> gq = entry.getValue();
-            // System.out.println("gq " + gq.size());
+            Map<String, ArrayList<Sample>> gq = entry.getValue();
             for (Map.Entry<String, ArrayList<Sample>> entry2 : gq.entrySet()) {
                 String gene = entry2.getKey();
                 ArrayList<Sample> sq2amparr = entry2.getValue();
@@ -130,19 +136,14 @@ public class Lr2gene {
                 }
                 Sig sig = checkBP(sq2amparr);
                 if (sig == null || Double.compare(sig.getSig(), -1.0) == 0) {
-                    // System.out.println("Null sig" + lr.size());
                     if (lr_med > AMP) {
-                        // System.out.println("Null Sig >AMP");
                         sig = new Sig(0.0, 0.0, lr.size(), "Whole", lr_med, "Amp", lr.size(), 0.0, "ALL", lr_med);
                     } else if (lr_med <= DEL) {
                         sig = new Sig(0.0, 0.0, lr.size(), "Whole", lr_med, "Del", lr.size(), 0.0, "ALL", lr_med);
-                        // System.out.println("Null Sig <= Del");
                     }
                 }
-                String regexp = "\\d";
-                Pattern pattern1 = Pattern.compile(regexp);
-                Matcher matcher1 = pattern1.matcher(sig.getSigseg());
-                if (!sig.getSigseg().isEmpty() && matcher1.find()) {
+                Matcher matcher = SLASH_D.matcher(sig.getSigseg());
+                if (!sig.getSigseg().isEmpty() && matcher.find()) {
                     String[] exons = sig.getSigseg().split(",");
                     double estart = sq2amparr.get(Integer.valueOf(exons[0]) - 1).getStart();
                     double eend = sq2amparr.get(exons.length - 1).getEnd();
@@ -211,8 +212,9 @@ public class Lr2gene {
             double lrupm = StatUtils.percentile(convertDoubles(lrup), 50);
             double lrbmm = StatUtils.percentile(convertDoubles(lrbm), 50);
             String cn = lrbmm < -0.35 ? "Del" : (lrupm > 0.35 && Math.abs(lrbmm) < Math.abs(lrupm) ? "Amp" : "NA");
-            if ("NA".equals(cn))
+            if ("NA".equals(cn)) {
                 continue;
+            }
             double[] bmiscArr = isConsecutive(bm);
             double[] upiscArr = isConsecutive(up);
             if (bmiscArr[0] != 0) {
@@ -246,7 +248,6 @@ public class Lr2gene {
             }
         }
         if (sig == null) {
-            // System.out.println("192: Sig null");
             sig = findBP(lr);
         }
         if (sig.getSig() != 0) {
@@ -283,24 +284,13 @@ public class Lr2gene {
     private double[] getBPS(double[] lr) {
         double[][] dis = new double[lr.length][3];
         for (int i = 0; i < lr.length; i++) {
-            if (i == 0) {
-                dis[i][0] = lr[i] - lr[lr.length - 1];
-                dis[i][1] = lr[i];
-                dis[i][2] = lr[lr.length - 1];
-            } else {
-                dis[i][0] = lr[i] - lr[i - 1];
-                dis[i][1] = lr[i];
-                dis[i][2] = lr[i - 1];
-            }
+            int idx = i == 0 ? lr.length - 1 : i - 1;
+            dis[i][0] = lr[i] - lr[idx];
+            dis[i][1] = lr[i];
+            dis[i][2] = lr[idx];
         }
-        // java.util.Arrays.sort(dis);
 
-        java.util.Arrays.sort(dis, new java.util.Comparator<double[]>() {
-            @Override
-            public int compare(double[] a, double[] b) {
-                return Double.compare(a[0], b[0]);
-            }
-        });
+        java.util.Arrays.sort(dis, DIS_COMPARATOR);
 
         ArrayList<Double> bpsArr = new ArrayList<>(dis.length);
         for (double[] bp : dis) {
@@ -377,7 +367,6 @@ public class Lr2gene {
         double[] ti1 = new double[bm.size()];
         double[] tlr2 = new double[up.size()];
         double[] ti2 = new double[up.size()];
-        double[] result = new double[2];
         int i = 0;
         for (double[] b : bm) {
             tlr1[i] = b[1];

@@ -1,15 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.astrazeneca.seq2c;
 
-/**
- *
- * @author Petr_Rastegaev
- */
 public class Sig {
+
     private double sig;
     private String bp;
     private double minp;
@@ -20,7 +12,8 @@ public class Sig {
     private String sigseg;
     private double sigdiff;
     private int total;
-    public Sig(double sig, double minp,double bpi,String bp,double siglr,String cn,int total,double mindiff,String sigseg,double sigdiff){
+
+    public Sig(double sig, double minp, double bpi, String bp, double siglr, String cn, int total, double mindiff, String sigseg, double sigdiff) {
         this.sig = sig;
         this.minp = minp;
         this.bpi = bpi;
@@ -32,10 +25,12 @@ public class Sig {
         this.sigdiff = sigdiff;
         this.total = total;
     }
-    public void addSig(double sig){
+
+    public void addSig(double sig) {
         this.setSig(sig);
     }
-    public void addSdiff(double sigdiff){
+
+    public void addSdiff(double sigdiff) {
         this.setSigdiff(sigdiff);
     }
 
@@ -47,7 +42,8 @@ public class Sig {
     }
 
     /**
-     * @param bp the bp to set
+     * @param bp
+     *            the bp to set
      */
     public void setBp(String bp) {
         this.bp = bp;
@@ -61,7 +57,8 @@ public class Sig {
     }
 
     /**
-     * @param minp the minp to set
+     * @param minp
+     *            the minp to set
      */
     public void setMinp(double minp) {
         this.minp = minp;
@@ -75,7 +72,8 @@ public class Sig {
     }
 
     /**
-     * @param bpi the bpi to set
+     * @param bpi
+     *            the bpi to set
      */
     public void setBpi(double bpi) {
         this.bpi = bpi;
@@ -89,7 +87,8 @@ public class Sig {
     }
 
     /**
-     * @param siglr the siglr to set
+     * @param siglr
+     *            the siglr to set
      */
     public void setSiglr(double siglr) {
         this.siglr = siglr;
@@ -103,7 +102,8 @@ public class Sig {
     }
 
     /**
-     * @param cn the cn to set
+     * @param cn
+     *            the cn to set
      */
     public void setCn(String cn) {
         this.cn = cn;
@@ -117,7 +117,8 @@ public class Sig {
     }
 
     /**
-     * @param mindiff the mindiff to set
+     * @param mindiff
+     *            the mindiff to set
      */
     public void setMindiff(double mindiff) {
         this.mindiff = mindiff;
@@ -131,7 +132,8 @@ public class Sig {
     }
 
     /**
-     * @param sigseg the sigseg to set
+     * @param sigseg
+     *            the sigseg to set
      */
     public void setSigseg(String sigseg) {
         this.sigseg = sigseg;
@@ -145,7 +147,8 @@ public class Sig {
     }
 
     /**
-     * @param sigdiff the sigdiff to set
+     * @param sigdiff
+     *            the sigdiff to set
      */
     public void setSigdiff(double sigdiff) {
         this.sigdiff = sigdiff;
@@ -159,7 +162,8 @@ public class Sig {
     }
 
     /**
-     * @param total the total to set
+     * @param total
+     *            the total to set
      */
     public void setTotal(int total) {
         this.total = total;
@@ -173,10 +177,11 @@ public class Sig {
     }
 
     /**
-     * @param sig the sig to set
+     * @param sig
+     *            the sig to set
      */
     public void setSig(double sig) {
         this.sig = sig;
     }
-  
+
 }

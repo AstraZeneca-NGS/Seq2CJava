@@ -1,7 +1,5 @@
 package com.astrazeneca.seq2c;
 
-
-
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -10,19 +8,17 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.astrazeneca.seq2c.Dispatcher.Service;
 
 import htsjdk.samtools.*;
 
-/**
- *
- * @author Petr_Rastegaev
- */
 public class Seq2cov {
-
 
     private final String bedfileName;
     private final String bamfileName;
@@ -62,7 +58,6 @@ public class Seq2cov {
                 int end = Integer.parseInt(parts[2]);
                 if (parts.length == 8) {
                     PCRamplbc = true;
-                    // System.out.println("Its opt_a!");
                 }
                 start += 1;
                 int[] CDS = { start, end };
@@ -111,7 +106,6 @@ public class Seq2cov {
         }
         return false; // "grch";
     }
-
 
     private static class Seq2covGene {
 
@@ -173,7 +167,7 @@ public class Seq2cov {
                     end = rEnd;
                 }
                 Worker worker = workers.poll();
-                if(worker == null) {
+                if (worker == null) {
                     worker = new Worker(SamReaderFactory.makeDefault().open(new File(bamfileName)));
                 }
                 worker.ctx = this;
@@ -298,7 +292,6 @@ public class Seq2cov {
                                 } else {
                                     te1 = cdsEnd;
                                 }
-                                // System.out.println("entered elseif " +cdsStart+" "+cdsEnd + tchr);
                                 if (!(Math.abs((double)te1 - (double)ts1) / ((double)seqEnd + (double)add - seqStart) > ovlp)) {
                                     continue;
                                 }
@@ -325,7 +318,6 @@ public class Seq2cov {
                                 } else {
                                     te1 = cdsEnd;
                                 }
-                                // System.out.println("entered else " +cdsStart+" "+cdsEnd + tchr);
                                 if (!((Math.abs((double)seqStart - (double)cdsStart) <= dis && Math.abs((double)seqEnd - (double)cdsEnd) <= dis) && Math.abs(((double)ts1 - (double)te1) / ((double)seqEnd - (double)seqStart)) > ovlp)) {
                                     continue;
                                 }
