@@ -1,1 +1,3 @@
-seq2c  java port project
+# Seq2CJava
+
+Seq2C Java port
