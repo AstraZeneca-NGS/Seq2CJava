@@ -7,6 +7,9 @@ repositories  {
     mavenCentral()
 }
 
+targetCompatibility = "1.7"
+sourceCompatibility = "1.7"
+
 dependencies {
     compile 'commons-cli:commons-cli:1.2' 
     compile('com.github.samtools:htsjdk:1.140') {
