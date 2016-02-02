@@ -21,8 +21,8 @@ public class Seq2c {
         final String covFile = cmdArgs[2];
         String control = "";
 
-        if (cmdArgs.length > 2) {
-            control = cmdArgs[2];
+        if (cmdArgs.length > 3) {
+            control = cmdArgs[3];
         }
 
         Dispatcher.init(getThreadsCount(cmd));
