@@ -1,11 +1,13 @@
 package com.astrazeneca.seq2c;
 
+import org.apache.commons.cli.*;
+
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.cli.*;
 
 public class Seq2c {
 
@@ -16,10 +18,11 @@ public class Seq2c {
         String[] cmdArgs = cmd.getArgs();
         String sam2bamFile = cmdArgs[0];
         final String bedFile = cmdArgs[1];
+        final String covFile = cmdArgs[2];
         String control = "";
 
-        if (cmdArgs.length > 2) {
-            control = cmdArgs[2];
+        if (cmdArgs.length > 3) {
+            control = cmdArgs[3];
         }
 
         Dispatcher.init(getThreadsCount(cmd));
@@ -28,11 +31,16 @@ public class Seq2c {
             final Map<String, String> sam2bam = Bam2Reads.parseFile(sam2bamFile);
 
             final Collection<Gene> sqrlist = new ArrayList<>();
+            boolean rewrite = false;
             for (final Map.Entry<String, String> entry : sam2bam.entrySet()) {
                 Seq2cov sec2cov = new Seq2cov(bedFile, entry.getValue(), entry.getKey());
                 Collection<Gene> cov = sec2cov.process();
+                //print coverage to the file
+                printCoverage(cov, covFile, rewrite);
+                rewrite = true;
                 sqrlist.addAll(cov);
             }
+
 
             Map<String, Long> stat = Bam2Reads.printStatsToFile(sam2bamFile);
 
@@ -46,6 +54,28 @@ public class Seq2c {
 
         } finally {
             Dispatcher.shutdown();
+        }
+    }
+
+    private static void printCoverage(Collection<Gene> sqrlist, String covFile, boolean rewrite) {
+        try (FileWriter writer = new FileWriter(covFile, rewrite)) {
+            writer.write("Sample\tGene\tChr\tStart\tEnd\tTag\tLength\tMeanDepth\n");
+            writer.flush();
+            for (Gene gene : sqrlist) {
+                StringBuilder str = new StringBuilder();
+                str.append(gene.getSample()).append("\t");
+                str.append(gene.getName()).append("\t");
+                str.append(gene.getChr()).append("\t");
+                str.append(gene.getStart()).append("\t");
+                str.append(gene.getEnd()).append("\t");
+                str.append(gene.getTag()).append("\t");
+                str.append(gene.getLen()).append("\t");
+                str.append(String.format("%.2f", gene.getDepth())).append("\n");
+                writer.write(str.toString());
+                writer.flush();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
