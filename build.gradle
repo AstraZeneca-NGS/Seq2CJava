@@ -23,7 +23,7 @@ dependencies {
 
 //applicationDefaultJvmArgs = ["-Xrunhprof:cpu=samples,depth=10,lineno=y", "-Xmx1g", "-Dsamjdk.buffer_size=524288"]
 
-applicationDefaultJvmArgs = ["-Xms768m", "-Xmx1g", "-Dsamjdk.buffer_size=524288"]
+applicationDefaultJvmArgs = ["-Xms768m", "-Xmx4g", "-Dsamjdk.buffer_size=524288"]
 
 mainClassName = "com.astrazeneca.seq2c.Seq2c"
 

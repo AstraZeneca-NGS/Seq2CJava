@@ -1,12 +1,12 @@
 package com.astrazeneca.seq2c;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.commons.cli.*;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.inference.TTest;
+
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Lr2gene {
 
@@ -142,36 +142,36 @@ public class Lr2gene {
                         sig = new Sig(0.0, 0.0, lr.size(), "Whole", lr_med, "Del", lr.size(), 0.0, "ALL", lr_med);
                     }
                 }
-                Matcher matcher = SLASH_D.matcher(sig.getSigseg());
-                if (!sig.getSigseg().isEmpty() && matcher.find()) {
-                    String[] exons = sig.getSigseg().split(",");
-                    double estart = sq2amparr.get(Integer.valueOf(exons[0]) - 1).getStart();
-                    double eend = sq2amparr.get(exons.length - 1).getEnd();
-                    sig.setSigseg(sig.getSigseg() + (estart - eend));
-                }
-                String[] locArr = loc.get(gene);
-                String locStr = Sample + "\t" + gene + "\t" + locArr[0] + "\t" + locArr[1] + "\t" + locArr[2] + "\t" + locArr[3] + "\t";
-                String str1;
-                if (sig.getSig() != -1) {
-                    str1 = lr_med + "\t" + sig.getSig() + "\t" + sig.getBp() + "\t" + sig.getCn() + "\t" + sig.getBpi() + "\t" + sig.getTotal() + "\t" + sig.getSiglr() + "\t" + sig.getSigdiff() + "\t" + sig.getSigseg();
-                } else {
-                    str1 = lr_med + "\t\t\t\t\t" + sig.getTotal();
-                }
-
-                if (j == 0)
-                    System.out.println("Sample\tGene\tChr\tStart\tEnd\tLength\tLog2ratio\tSig\tBP_Whole\tAmp_Del\tAb_Seg\tTotal_Seg\tAb_log2ratio\tLog2r_Diff\tAb_Seg_Loc\tAb_Samples\tAb_Samples_Pcnt");
-                j++;
-                System.out.println(locStr + str1);
-            }
+        Matcher matcher = SLASH_D.matcher(sig.getSigseg());
+        if (!sig.getSigseg().isEmpty() && matcher.find()) {
+            String[] exons = sig.getSigseg().split(",");
+            long estart = sq2amparr.get(Double.valueOf(exons[0]).intValue() - 1).getStart();
+            long eend = sq2amparr.get(exons.length - 1).getEnd();
+            sig.setSigseg(sig.getSigseg() + (estart - eend));
         }
-    }
+        String[] locArr = loc.get(gene);
+        String locStr = Sample + "\t" + gene + "\t" + locArr[0] + "\t" + locArr[1] + "\t" + locArr[2] + "\t" + locArr[3] + "\t";
+        String str1;
+        if (sig.getSig() != -1) {
+            str1 = lr_med + "\t" + sig.getSig() + "\t" + sig.getBp() + "\t" + sig.getCn() + "\t" + sig.getBpi() + "\t" + sig.getTotal() + "\t" + sig.getSiglr() + "\t" + sig.getSigdiff() + "\t" + sig.getSigseg();
+        } else {
+            str1 = lr_med + "\t\t\t\t\t" + sig.getTotal();
+        }
 
-    private Sig checkBP(ArrayList<Sample> segs) {
+        if (j == 0)
+            System.out.println("Sample\tGene\tChr\tStart\tEnd\tLength\tLog2ratio\tSig\tBP_Whole\tAmp_Del\tAb_Seg\tTotal_Seg\tAb_log2ratio\tLog2r_Diff\tAb_Seg_Loc\tAb_Samples\tAb_Samples_Pcnt");
+        j++;
+        System.out.println(locStr + str1);
+    }
+}
+}
+
+private Sig checkBP(ArrayList<Sample> segs) {
         double[][] arr = new double[segs.size()][3];
         double[] lr = new double[segs.size()];
         int i = 0;
         for (Sample sqarr : segs) {
-            arr[i][0] = sqarr.getStart();
+        arr[i][0] = sqarr.getStart();
             arr[i][1] = sqarr.getNorm3();
             arr[i][2] = i;
             i++;
