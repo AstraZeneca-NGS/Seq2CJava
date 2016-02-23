@@ -18,10 +18,10 @@ The following is an example command to run Seq2c:
 
 where:
 
-    1. sample2bam.txt   -   file of samples and bam files, each sample at new line
-    2. regions.bed      -   bed file with regions of interest, with at least 4 columns
-    3. coverage.txt     -   file for coverage output
-    4. sample_name      -   optional control sample names. For multiple controls, separate them using :
+    1. sample2bam.txt   -   required, a file containing list of samples and bam files, each sample at new line
+    2. regions.bed      -   required, a bed file with regions of interest, with at least 4 columns
+    3. coverage.txt     -   required, a file for coverage output
+    4. sample_name      -   optional, control sample names. For multiple controls, separate them using ':'
 
 ## Program Options
 
