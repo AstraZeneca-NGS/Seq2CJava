@@ -111,7 +111,7 @@ public class Seq2c {
         HelpFormatter formater = new HelpFormatter();
         formater.setOptionComparator(null);
         formater.printHelp(150,
-                Seq2c.class.getSimpleName() + " [-options] sample2bam.txt regions.bed coverage.txt [sample_name1[:sample_name2]]\n",
+                Seq2c.class.getSimpleName() + " sample2bam.txt regions.bed coverage.txt [sample_name1[:sample_name2]] [-options]\n",
                 "Arguments are:\n"
                         + "sample2bam.txt:      Required. A file containing list of samples and bam files, each sample at new line.  At least two columns. \nFirst is the sample name, 2nd is the bam file name.\n"
                         + "regions.bed:         Required. A bed file with regions of interest. At least 4 columns.\n"

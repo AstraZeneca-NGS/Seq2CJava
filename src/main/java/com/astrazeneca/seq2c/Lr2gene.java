@@ -40,7 +40,6 @@ public class Lr2gene {
     }
 
 
-
     public static void main(String[] args) throws ParseException {
         CommandLine cmd = buildCommandLine(args);
 
@@ -60,27 +59,62 @@ public class Lr2gene {
         this.inputGenes = sq;
     }
 
+    private static class Locus {
+        String geneName;
+        String chr;
+        long start;
+        long end;
+        long length;
+
+        Locus(String geneName, long start, long end, String chr) {
+            this.geneName = geneName;
+            this.chr = chr;
+            this.start = start;
+            this.end = end;
+        }
+
+        void setLength(long length) {
+            this.length = length;
+        }
+
+        void addLength(long length) {
+            this.length += length;
+        }
+
+        public void shiftStart(long start) {
+            if (this.start > start) {
+                this.start = start;
+            }
+        }
+
+        public void shiftEnd(long end) {
+            if (this.end < end) {
+                this.end = end;
+            }
+        }
+    }
+
     public void process() {
         Map<String, HashMap<String, ArrayList<Sample>>> g2amp = new HashMap<>();
-        Map<String, String[]> loc = new HashMap<>();
+        Map<String, Locus> loc = new HashMap<>();
 
         // System.out.println("inputGenes" + inputGenes.size());
         for (Sample sqr : inputGenes) {
-            String[] locArr = new String[4];
-            locArr[0] = sqr.getChr();
-            locArr[1] = String.valueOf(sqr.getStart());
-            locArr[2] = String.valueOf(sqr.getEnd());
+            Locus locus = new Locus(sqr.getGene(), sqr.getStart(), sqr.getEnd(), sqr.getChr());
             // locArr[3] = String.valueOf(sqr.getEnd() - sqr.getStart() + 1);
             long len = sqr.getEnd() - sqr.getStart() + 1;
+            locus.setLength(len);
+
             // implemented according to perl variant: the length of one gene is summed up
             // delete this block, if length of gene should not be summed up
             if (loc.containsKey(sqr.getGene())) {
-                String[] prev = loc.get(sqr.getGene());
-                len += Long.valueOf(prev[3]);
-                locArr[3] = String.valueOf(len);
+                Locus previous = loc.get(sqr.getGene());
+                locus.addLength(previous.length);
+                locus.shiftStart(previous.start);
+                locus.shiftEnd(previous.end);
             }
             // end
-            locArr[3] = String.valueOf(len);
+
             HashMap<String, ArrayList<Sample>> gq;
             ArrayList<Sample> sq2amparr;
             if (g2amp.containsKey(sqr.getSample())) {
@@ -103,7 +137,7 @@ public class Lr2gene {
             }
             gq.put(sqr.getGene(), sq2amparr);
             g2amp.put(sqr.getSample(), gq);
-            loc.put(sqr.getGene(), locArr);
+            loc.put(sqr.getGene(), locus);
         }
         int j = 0;
         for (Map.Entry<String, HashMap<String, ArrayList<Sample>>> entry : g2amp.entrySet()) {
@@ -142,36 +176,36 @@ public class Lr2gene {
                         sig = new Sig(0.0, 0.0, lr.size(), "Whole", lr_med, "Del", lr.size(), 0.0, "ALL", lr_med);
                     }
                 }
-        Matcher matcher = SLASH_D.matcher(sig.getSigseg());
-        if (!sig.getSigseg().isEmpty() && matcher.find()) {
-            String[] exons = sig.getSigseg().split(",");
-            long estart = sq2amparr.get(Double.valueOf(exons[0]).intValue() - 1).getStart();
-            long eend = sq2amparr.get(exons.length - 1).getEnd();
-            sig.setSigseg(sig.getSigseg() + (estart - eend));
-        }
-        String[] locArr = loc.get(gene);
-        String locStr = Sample + "\t" + gene + "\t" + locArr[0] + "\t" + locArr[1] + "\t" + locArr[2] + "\t" + locArr[3] + "\t";
-        String str1;
-        if (sig.getSig() != -1) {
-            str1 = lr_med + "\t" + sig.getSig() + "\t" + sig.getBp() + "\t" + sig.getCn() + "\t" + sig.getBpi() + "\t" + sig.getTotal() + "\t" + sig.getSiglr() + "\t" + sig.getSigdiff() + "\t" + sig.getSigseg();
-        } else {
-            str1 = lr_med + "\t\t\t\t\t" + sig.getTotal();
-        }
+                Matcher matcher = SLASH_D.matcher(sig.getSigseg());
+                if (!sig.getSigseg().isEmpty() && matcher.find()) {
+                    String[] exons = sig.getSigseg().split(",");
+                    long estart = sq2amparr.get(Double.valueOf(exons[0]).intValue() - 1).getStart();
+                    long eend = sq2amparr.get(exons.length - 1).getEnd();
+                    sig.setSigseg(sig.getSigseg() + (estart - eend));
+                }
+                Locus locus = loc.get(gene);
+                String locStr = Sample + "\t" + gene + "\t" + locus.chr + "\t" + locus.start + "\t" + locus.end + "\t" + locus.length + "\t";
+                String str1;
+                if (sig.getSig() != -1) {
+                    str1 = lr_med + "\t" + sig.getSig() + "\t" + sig.getBp() + "\t" + sig.getCn() + "\t" + sig.getBpi() + "\t" + sig.getTotal() + "\t" + sig.getSiglr() + "\t" + sig.getSigdiff() + "\t" + sig.getSigseg();
+                } else {
+                    str1 = lr_med + "\t\t\t\t\t" + sig.getTotal();
+                }
 
-        if (j == 0)
-            System.out.println("Sample\tGene\tChr\tStart\tEnd\tLength\tLog2ratio\tSig\tBP_Whole\tAmp_Del\tAb_Seg\tTotal_Seg\tAb_log2ratio\tLog2r_Diff\tAb_Seg_Loc\tAb_Samples\tAb_Samples_Pcnt");
-        j++;
-        System.out.println(locStr + str1);
+                if (j == 0)
+                    System.out.println("Sample\tGene\tChr\tStart\tEnd\tLength\tLog2ratio\tSig\tBP_Whole\tAmp_Del\tAb_Seg\tTotal_Seg\tAb_log2ratio\tLog2r_Diff\tAb_Seg_Loc\tAb_Samples\tAb_Samples_Pcnt");
+                j++;
+                System.out.println(locStr + str1);
+            }
+        }
     }
-}
-}
 
-private Sig checkBP(ArrayList<Sample> segs) {
+    private Sig checkBP(ArrayList<Sample> segs) {
         double[][] arr = new double[segs.size()][3];
         double[] lr = new double[segs.size()];
         int i = 0;
         for (Sample sqarr : segs) {
-        arr[i][0] = sqarr.getStart();
+            arr[i][0] = sqarr.getStart();
             arr[i][1] = sqarr.getNorm3();
             arr[i][2] = i;
             i++;
@@ -224,7 +258,7 @@ private Sig checkBP(ArrayList<Sample> segs) {
                         if (up.get(i)[2] == bmiscArr[1])
                             ti = k;
                     }
-                    bm.add((int)bmiscArr[1], up.get(ti)); // splice
+                    bm.add((int) bmiscArr[1], up.get(ti)); // splice
                 }
                 sig = getCalls(bm, up);
                 double[] issig = isSig(bm, up);
@@ -238,7 +272,7 @@ private Sig checkBP(ArrayList<Sample> segs) {
                         if (up.get(i)[2] == upiscArr[1])
                             ti = k;
                     }
-                    up.add((int)upiscArr[1], bm.get(ti)); // splice
+                    up.add((int) upiscArr[1], bm.get(ti)); // splice
                 }
                 sig = getCalls(up, bm);
                 double[] issig = isSig(up, bm);
@@ -313,9 +347,9 @@ private Sig checkBP(ArrayList<Sample> segs) {
         String cn = "NA";
         double mindiff = 0;
         String sigseg = "";
-        double[] lr_x = new double[lr.length - (int)MINBPEXONS];
+        double[] lr_x = new double[lr.length - (int) MINBPEXONS];
         double[] lr_y = new double[lr.length];
-        for (int i = (int)MINBPEXONS; i < lr.length - (int)MINBPEXONS; i++) {
+        for (int i = (int) MINBPEXONS; i < lr.length - (int) MINBPEXONS; i++) {
             for (int k = 0; k <= (i - 1); k++) {
                 lr_x[k] = lr[k];
             }
@@ -524,7 +558,7 @@ private Sig checkBP(ArrayList<Sample> segs) {
         DEL = getDoubleValue(cmd, "D", DEFAULTS.DEL);
         EXONDIFF = getDoubleValue(cmd, "E", DEFAULTS.EXONDIFF);
         MAXRATE = getDoubleValue(cmd, "R", DEFAULTS.MAXRATE);
-        MAXCNT = (int)getDoubleValue(cmd, "N", DEFAULTS.MAXCNT);
+        MAXCNT = (int) getDoubleValue(cmd, "N", DEFAULTS.MAXCNT);
         MINTTDIFF = getDoubleValue(cmd, "t", DEFAULTS.MINTTDIFF);
         TTPVALUE = getDoubleValue(cmd, "P", DEFAULTS.TTPVALUE);
         MINBPEXONS = getDoubleValue(cmd, "e", DEFAULTS.MINBPEXONS);
@@ -620,7 +654,7 @@ private Sig checkBP(ArrayList<Sample> segs) {
                 .hasArg()
                 .withType(Number.class)
                 .withDescription("If a breakpoint has been detected more than \"int\" samples, it's considered false positives and removed.\n"
-                        + "Default: " + (int)DEFAULTS.MAXCNT + ".  Use in combination with -R.")
+                        + "Default: " + (int) DEFAULTS.MAXCNT + ".  Use in combination with -R.")
                 .isRequired(false)
                 .create("N"));
         options.addOption(OptionBuilder.withArgName("float")
@@ -648,7 +682,7 @@ private Sig checkBP(ArrayList<Sample> segs) {
 
     private static double getDoubleValue(CommandLine cmd, String opt, double defaultValue) throws ParseException {
         Object value = cmd.getParsedOptionValue(opt);
-        return value == null ? defaultValue : ((Number)value).doubleValue();
+        return value == null ? defaultValue : ((Number) value).doubleValue();
     }
 
 }

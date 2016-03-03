@@ -345,8 +345,11 @@ public class Seq2cov {
                 }
                 ctx.done(this);
             } catch (Exception e) {
-//                e.printStackTrace();
-                throw new RuntimeException(e);
+                try {
+                    ctx.done(this);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
             }
         }
 
