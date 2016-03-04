@@ -34,7 +34,7 @@ public class Seq2cov {
     }
 
     public Seq2cov(String bename, String bamname, String spname) {
-        this(bename, bamname, spname, max(min(Dispatcher.getThreadsCount(), 8), 1));
+        this(bename, bamname, spname, max(Dispatcher.getThreadsCount(), 1));
     }
 
     public Collection<Gene> process() throws IOException {
