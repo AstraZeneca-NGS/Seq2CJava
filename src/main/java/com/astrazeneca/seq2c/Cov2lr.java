@@ -1,16 +1,16 @@
 package com.astrazeneca.seq2c;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.*;
-
 import org.apache.commons.math3.analysis.function.Log;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.util.Precision;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Normalize the coverage from targeted sequencing to CNV log2 ratio. The algorithm assumes the medium is diploid, thus not suitable
@@ -74,16 +74,64 @@ public class Cov2lr {
      */
 
     public Cov2lr(boolean amplicon, Map<String, Long> stat, Collection<Gene> genesArray, String controlSamples) {
+        init(amplicon, stat);
+        readCoverage(genesArray, this.genes, this.samples);
+        initFactor(controlSamples);
+    }
+
+    public Cov2lr(boolean amplicon, Map<String, Long> stat, String covFile, String controlSamples) {
+        init(amplicon, stat);
+        readCoverageFile(covFile, this.genes, this.samples);
+        initFactor(controlSamples);
+    }
+
+    private void init(boolean amplicon, Map<String, Long> stat) {
         this.amplicon = amplicon;
         this.mappingReads = stat;
         this.genes = new LinkedHashMap<>();
         this.samples = new LinkedHashMap<>();
-        readCoverage(genesArray, this.genes, this.samples);
+    }
+
+
+    private void initFactor(String controlSamples) {
         this.factor = new LinkedHashMap<>();
         setFactor();
         if (controlSamples != null && !controlSamples.trim().isEmpty()) {
             this.controlSamples = controlSamples.split(":");
         }
+    }
+
+    private void readCoverageFile(String covFile, Map<String, Gene> genes, Map<String, Map<String, Sample>> samples) {
+        try (BufferedReader reader= new BufferedReader(new FileReader(covFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                //skip lines with words "Sample, Whole, Control, Undertermined
+                if (line.contains("Sample") || line.contains("Whole") || line.contains("Control") ||
+                        line.contains("Undertermined")) continue;
+
+                String[] sampleLines = line.split("\\s+");
+                if (sampleLines.length == 8) {
+
+                    String sample = sampleLines[0];
+                    String gene = sampleLines[1];
+                    String chr = sampleLines[2];
+                    long start = Long.parseLong(sampleLines[3]);
+                    long end = Long.parseLong(sampleLines[4]);
+                    long len = Long.parseLong(sampleLines[6]);
+                    String tag = "";
+                    double depth = Double.parseDouble(sampleLines[7]);
+
+                    addGene(genes, sample, gene, chr, start, end, tag, len, Precision.round(depth, 2));
+                    String key = amplicon ? join(" ", gene, chr, Long.toString(start), Long.toString(end), Long.toString(len)) : gene;
+                    addSample(samples, key, sample, chr, start, end, len, Precision.round(depth, 2), gene);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Cannot open file " + covFile);
+        } catch (NumberFormatException e) {
+            System.err.println("Cannot parse long number");
+        }
+
     }
 
     /**

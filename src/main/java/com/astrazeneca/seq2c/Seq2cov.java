@@ -1,7 +1,7 @@
 package com.astrazeneca.seq2c;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import com.astrazeneca.seq2c.Dispatcher.Service;
+import htsjdk.samtools.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,9 +14,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.astrazeneca.seq2c.Dispatcher.Service;
-
-import htsjdk.samtools.*;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 public class Seq2cov {
 
@@ -346,8 +345,11 @@ public class Seq2cov {
                 }
                 ctx.done(this);
             } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
+                try {
+                    ctx.done(this);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
             }
         }
 
