@@ -45,10 +45,7 @@ public class Cov2lr {
      * Value = factor
      */
     private Map<String, Double> factor;
-    /**
-     * Map of genes from second input file Key = name of gene Value = gene object
-     */
-    private Map<String, Gene> genes;
+
     /**
      * Map of samples Key = key for string, consists of sample name, gene name, start, end and length Value = map of sample names
      * and sample objects
@@ -66,8 +63,6 @@ public class Cov2lr {
      *
      * @param amplicon
      *            = determines the aggregation level (gene or record)
-     * @param useControlSamples
-     *            = use the control sample(s)
      * @param controlSamples
      *            = multiple controls are allowed, which are separated by ":"
      *
@@ -75,20 +70,19 @@ public class Cov2lr {
 
     public Cov2lr(boolean amplicon, Map<String, Long> stat, Collection<Gene> genesArray, String controlSamples) {
         init(amplicon, stat);
-        readCoverage(genesArray, this.genes, this.samples);
+        readCoverage(genesArray, this.samples);
         initFactor(controlSamples);
     }
 
     public Cov2lr(boolean amplicon, Map<String, Long> stat, String covFile, String controlSamples) {
         init(amplicon, stat);
-        readCoverageFile(covFile, this.genes, this.samples);
+        readCoverageFile(covFile, this.samples);
         initFactor(controlSamples);
     }
 
     private void init(boolean amplicon, Map<String, Long> stat) {
         this.amplicon = amplicon;
         this.mappingReads = stat;
-        this.genes = new LinkedHashMap<>();
         this.samples = new LinkedHashMap<>();
     }
 
@@ -101,7 +95,7 @@ public class Cov2lr {
         }
     }
 
-    private void readCoverageFile(String covFile, Map<String, Gene> genes, Map<String, Map<String, Sample>> samples) {
+    private void readCoverageFile(String covFile, Map<String, Map<String, Sample>> samples) {
         try (BufferedReader reader= new BufferedReader(new FileReader(covFile))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -121,7 +115,6 @@ public class Cov2lr {
                     String tag = "";
                     double depth = Double.parseDouble(sampleLines[7]);
 
-                    addGene(genes, sample, gene, chr, start, end, tag, len, Precision.round(depth, 2));
                     String key = amplicon ? join(" ", gene, chr, Long.toString(start), Long.toString(end), Long.toString(len)) : gene;
                     addSample(samples, key, sample, chr, start, end, len, Precision.round(depth, 2), gene);
                 }
@@ -175,7 +168,7 @@ public class Cov2lr {
         return map;
     }
 
-    private void readCoverage(Collection<Gene> genesArray, Map<String, Gene> genes, Map<String, Map<String, Sample>> samples) {
+    private void readCoverage(Collection<Gene> genesArray, Map<String, Map<String, Sample>> samples) {
         for (Gene gn : genesArray) {
             if (gn.getTag().contains("Whole")) {
                 continue;
@@ -189,7 +182,6 @@ public class Cov2lr {
             long end = gn.getEnd();
             long len = gn.getLen();
             double depth = gn.getDepth();
-            addGene(genes, sample, gene, chr, start, end, tag, len, Precision.round(depth, 2));
             String key = amplicon ? join(" ", gene, chr, Long.toString(start), Long.toString(end), Long.toString(len)) : gene;
             addSample(samples, key, sample, chr, start, end, len, Precision.round(depth, 2), gene);
         }
@@ -262,11 +254,7 @@ public class Cov2lr {
             long start = 0;
             long end = 0;
             long len = 0;
-            for (Map.Entry<String, Gene> entry : genes.entrySet()) {
-                start += entry.getValue().getStart();
-                end += entry.getValue().getEnd();
-                len += entry.getValue().getLen();
-            }
+
 
             writer.write("start = " + start + " ");
             writer.write("end = " + end + " ");
