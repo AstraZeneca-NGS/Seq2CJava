@@ -14,6 +14,26 @@ public class Sample {
     private double factor2;
     private double norm1b;
     private double norm2;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Sample sample1 = (Sample) o;
+
+        if (name != null ? !name.equals(sample1.name) : sample1.name != null) return false;
+        return sample != null ? sample.equals(sample1.sample) : sample1.sample == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (sample != null ? sample.hashCode() : 0);
+        return result;
+    }
+
     private double norm3;
     private double norm3s;
 
@@ -26,6 +46,10 @@ public class Sample {
         this.cov = cov;
         this.gene = gene;
         this.chr = chr;
+    }
+
+    public String getKey() {
+        return name + ":" + sample;
     }
 
     public long getStart() {
