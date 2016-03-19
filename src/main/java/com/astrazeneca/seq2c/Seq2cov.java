@@ -167,7 +167,7 @@ public class Seq2cov {
                 }
                 Worker worker = workers.poll();
                 if (worker == null) {
-                    worker = new Worker(SamReaderFactory.makeDefault().open(new File(bamfileName)));
+                    worker = new Worker(SamReaderFactory.makeDefault().validationStringency(ValidationStringency.SILENT).open(new File(bamfileName)));
                 }
                 worker.ctx = this;
                 worker.numer = workerNumber++;
