@@ -33,35 +33,57 @@ public class SampleIterator {
     public Sample nextSample() {
 
         try {
-
-            String line = bufferReader.readLine();
             while (true) {
+                Sample sample;
+                if (next == null) {
+                    sample = readNextSample();
+                } else {
+                    sample = next;
+                }
+                next = readNextSample();
+                while (next != null && sample.equals(next)) {
+                    sample.addLen(next.getLen());
+                    sample.addCov(next.getCov());
+                    next = readNextSample();
+                }
+                return sample;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private Sample readNextSample() throws IOException {
+        String line = getNextLine();
+        if (line == null) return null;
+        next = readSample(line);
+        return next;
+    }
+
+    private String getNextLine() {
+
+        String line = null;
+        try {
+            while (true) {
+                line = bufferReader.readLine();
                 if (line == null) {
+                    return null;
+                }
+                if (line.isEmpty()) {
                     return null;
                 }
                 if (line.contains("Sample") || line.contains("Whole") || line.contains("Control") ||
                         line.contains("Undertermined")) {
-                    line = bufferReader.readLine();
                     continue;
-                }
-                Sample sample;
-                if (next == null) {
-                    sample = readSample(line);
-                } else {
-                    sample = next;
-                }
-                next = readSample(bufferReader.readLine());
-                while (next != null && sample.equals(next)) {
-                    sample.addLen(next.getLen());
-                    sample.addCov(next.getCov());
-                    next = readSample(bufferReader.readLine());
-                }
-                return sample;
+                } else
+                    return line;
             }
-        }catch (IOException e) {
+
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return line;
     }
 
     private Sample readSample(String currentLine) throws IOException {
