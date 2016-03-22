@@ -11,7 +11,9 @@ targetCompatibility = "1.7"
 sourceCompatibility = "1.7"
 
 dependencies {
-    compile 'commons-cli:commons-cli:1.2' 
+    compile 'commons-cli:commons-cli:1.2'
+    compile 'org.mapdb:mapdb:3.0.0-M3'
+    compile 'net.openhft:chronicle-map:3.7.0-rc'
     compile('com.github.samtools:htsjdk:1.140') {
         transitive = false
     }
@@ -23,7 +25,7 @@ dependencies {
 
 //applicationDefaultJvmArgs = ["-Xrunhprof:cpu=samples,depth=10,lineno=y", "-Xmx1g", "-Dsamjdk.buffer_size=524288"]
 
-applicationDefaultJvmArgs = ["-Xms768m", "-Xmx4g", "-Dsamjdk.buffer_size=524288"]
+applicationDefaultJvmArgs = ["-Xms256m", "-Xmx512m", "-Dsamjdk.buffer_size=524288"]
 
 mainClassName = "com.astrazeneca.seq2c.Seq2c"
 

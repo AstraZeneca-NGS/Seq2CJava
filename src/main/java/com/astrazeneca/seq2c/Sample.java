@@ -1,6 +1,8 @@
 package com.astrazeneca.seq2c;
 
-public class Sample {
+import java.io.Serializable;
+
+public class Sample implements Serializable{
 
     private String name;
     private String sample;
