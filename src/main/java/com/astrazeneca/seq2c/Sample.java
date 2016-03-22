@@ -143,11 +143,11 @@ public class Sample implements Serializable{
         this.norm1 = norm1;
     }
 
-    public String getResultString(String title) {
+    public String getResultString() {
         String format = "%.2f%n";
         StringBuilder builder = new StringBuilder();
         builder.append(sample).append("\t");
-        builder.append(title).append("\t");
+        builder.append(getTitle()).append("\t");
         builder.append(cov).append("\t");
         builder.append(String.format(format, norm1).trim()).append("\t");
         builder.append(String.format(format, norm1b).trim()).append("\t");
@@ -157,12 +157,12 @@ public class Sample implements Serializable{
         return builder.toString();
     }
 
-    public String getTitle(Gene gene) {
+    public String getTitle() {
         StringBuilder builder = new StringBuilder();
-        builder.append(gene.getName()).append("\t");
-        builder.append(gene.getChr()).append("\t");
-        builder.append(gene.getStart()).append("\t");
-        builder.append(gene.getEnd()).append("\t");
+        builder.append(gene).append("\t");
+        builder.append(chr).append("\t");
+        builder.append(start).append("\t");
+        builder.append(end).append("\t");
         builder.append(len).append("\t");
         return builder.toString();
     }

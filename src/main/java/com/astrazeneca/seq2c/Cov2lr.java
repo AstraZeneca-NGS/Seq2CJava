@@ -6,9 +6,7 @@ import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.util.Precision;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -179,10 +177,10 @@ public class Cov2lr {
 //        System.out.println("actual " + sampleMedianStream);
 //
 //        setNormStream(medDepth, factor2, sampleMedian, norm1);
-        return  setNorm(medDepth, factorStream, sampleMedianStream);
+        return setNormStream(medDepth, factorStream, sampleMedianStream, norm1);
     }
 
-    private Map<String,Map<String,Double>> readCoverage() {
+    private Map<String, Map<String, Double>> readCoverage() {
         SampleIterator iterator = new SampleIterator(covFile, amplicon);
         Map<String, Map<String, Double>> coverage = new LinkedHashMap<>();
         Sample sample = iterator.nextSample();
@@ -352,13 +350,19 @@ public class Cov2lr {
 
     private List<Sample> setNormStream(double medDepth, Map<String, Double> factor2, Map<String, Double> sampleMedian, Map<String, Map<String, Double>> norm) {
         List<Sample> sampleResult = new ArrayList<>();
-        boolean useControlSamples = isUseControlSamples();
-
-        for (Map.Entry<String, Map<String, Sample>> entry : samples.entrySet()) {
-            String key = entry.getKey();
-            double fact2 = factor2.get(key);
-            for (Sample sample : entry.getValue().values()) {
-                double norm1 = sample.getNorm1();
+        try {
+            PrintWriter writer = new PrintWriter("temp.txt");
+            boolean useControlSamples = isUseControlSamples();
+            SampleIterator iterator = new SampleIterator(covFile, amplicon);
+            Sample sample = iterator.nextSample();
+            while (sample != null) {
+                String key = sample.getName();
+                if (!factor2.containsKey(key)) {
+                    sample = iterator.nextSample();
+                    continue;
+                }
+                double fact2 = factor2.get(key);
+                double norm1 = norm.get(key).get(sample.getSample());
                 double smplMed = sampleMedian.get(sample.getSample());
                 sample.setNorm1b(Precision.round(norm1 * fact2 + 0.1, 2));
                 sample.setNorm2(Precision.round(medDepth != 0 ? log.value((norm1 * fact2 + 0.1) / medDepth) / LOG_OF_TWO : 0, 2));
@@ -366,8 +370,15 @@ public class Cov2lr {
                 if (useControlSamples) {
                     sample = addControlSamples(sample);
                 }
-                sampleResult.add(sample);
+//                sampleResult.add(sample);
+                writer.write(sample.getResultString() + "\n");
+                writer.flush();
+                sample = iterator.nextSample();
             }
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
         return sampleResult;
     }
