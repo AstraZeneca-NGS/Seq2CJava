@@ -140,8 +140,7 @@ public class Cov2lr {
 //        System.out.println("elapsed " + (end - start) / 1_000_000);
 
 //        start = System.nanoTime();
-        Map<String, Map<String, Double>> norm1 = new LinkedHashMap<>();
-        double medDepth = getMedDepthStream(samp, norm1);
+        double medDepth = getMedDepthStream(samp);
         //       end = System.nanoTime();
 //
 //        System.out.println(samples.size());
@@ -159,7 +158,8 @@ public class Cov2lr {
 //        System.out.println("elapsed " + (end - start) / 1_000_000);
 
 //        start = System.nanoTime();
-        List<Double> gooddepthStream = splitQualitySamplesStream(samp, medDepth, norm1);
+        Set<String> badGenes = new HashSet<>();
+        List<Double> gooddepthStream = splitQualitySamplesStream(samp, medDepth, badGenes);
         double medDepthGood = median.evaluate(toDoubleArray(gooddepthStream));
 //        System.out.println("actual " + medDepthGood);
 ////        System.out.println("elapsed " + (end - start) / 1_000_000);
@@ -168,16 +168,16 @@ public class Cov2lr {
 //        System.out.println(norm1.size());
 //
 //        Map<String, Double> factor2 = getFactor2(medDepthGood);
-        Map<String, Double> factorStream = getFactor2Stream(medDepthGood, norm1);
+        Map<String, Double> factorStream = getFactor2Stream(medDepthGood, badGenes);
 //
 //        Map<String, Double> sampleMedian = getSampleMedian(samp);
-        Map<String, Double> sampleMedianStream = getSampleMedianStream(samp, norm1);
+        Map<String, Double> sampleMedianStream = getSampleMedianStream(samp, badGenes);
 
 //        System.out.println("expected " + sampleMedian);
 //        System.out.println("actual " + sampleMedianStream);
 //
 //        setNormStream(medDepth, factor2, sampleMedian, norm1);
-        return setNormStream(medDepth, factorStream, sampleMedianStream, norm1);
+        return setNormStream(medDepth, factorStream, sampleMedianStream, badGenes);
     }
 
     private Map<String, Map<String, Double>> readCoverage() {
@@ -348,7 +348,7 @@ public class Cov2lr {
         return sampleResult;
     }
 
-    private List<Sample> setNormStream(double medDepth, Map<String, Double> factor2, Map<String, Double> sampleMedian, Map<String, Map<String, Double>> norm) {
+    private List<Sample> setNormStream(double medDepth, Map<String, Double> factor2, Map<String, Double> sampleMedian, Set<String> bed) {
         List<Sample> sampleResult = new ArrayList<>();
         try {
             PrintWriter writer = new PrintWriter("temp.txt");
@@ -362,7 +362,8 @@ public class Cov2lr {
                     continue;
                 }
                 double fact2 = factor2.get(key);
-                double norm1 = norm.get(key).get(sample.getSample());
+//                double norm1 = norm.get(key).get(sample.getSample());
+                double norm1 = 0.0;
                 double smplMed = sampleMedian.get(sample.getSample());
                 sample.setNorm1b(Precision.round(norm1 * fact2 + 0.1, 2));
                 sample.setNorm2(Precision.round(medDepth != 0 ? log.value((norm1 * fact2 + 0.1) / medDepth) / LOG_OF_TWO : 0, 2));
@@ -396,13 +397,22 @@ public class Cov2lr {
         return sampleMedian;
     }
 
-    private Map<String, Double> getSampleMedianStream(Set<String> samp, Map<String, Map<String, Double>> norm) {
+    private Map<String, Double> getSampleMedianStream(Set<String> samp, Set<String> badGenes) {
         Map<String, Double> sampleMedian = new LinkedHashMap<>();
 
         for (String s : samp) {
             List<Double> list = new LinkedList<>();
-            for (Map.Entry<String, Map<String, Double>> entry : norm.entrySet()) {
-                list.add(entry.getValue().get(s));
+            NormIterator iterator = new NormIterator("temp.txt");
+            Normalization normalization = iterator.nextNorm();
+            while (normalization != null){
+                if (badGenes.contains(normalization.gene)) {
+                    normalization = iterator.nextNorm();
+                    continue;
+                }
+                if (samples.containsKey(s)) {
+                    list.add(normalization.samples.get(s));
+                }
+                normalization = iterator.nextNorm();
             }
             sampleMedian.put(s, median.evaluate(toDoubleArray(list)));
         }
@@ -432,14 +442,21 @@ public class Cov2lr {
         return factor2;
     }
 
-    private Map<String, Double> getFactor2Stream(final double medDepth, Map<String, Map<String, Double>> norm) {
+    private Map<String, Double> getFactor2Stream(final double medDepth, Set<String> badGenes) {
         Map<String, Double> factor2 = new HashMap<>();
         double result = 0.0;
-        for (Map.Entry<String, Map<String, Double>> entry : norm.entrySet()) {
-            String key = entry.getKey();
-            double[] norms1 = new double[entry.getValue().size()];
+        NormIterator iterator = new NormIterator("temp.txt");
+        Normalization normalization = iterator.nextNorm();
+        while (normalization != null) {
+            String key = normalization.gene;
+            if (badGenes.contains(key)) {
+                normalization = iterator.nextNorm();
+                continue;
+            }
+
+            double[] norms1 = new double[normalization.samples.size()];
             int idx = 0;
-            for (Double normValue : entry.getValue().values()) {
+            for (Double normValue : normalization.samples.values()) {
                 norms1[idx++] = normValue;
             }
             double median = new Median().evaluate(norms1);
@@ -449,6 +466,7 @@ public class Cov2lr {
             } else {
                 factor2.put(key, 0.0);
             }
+            normalization = iterator.nextNorm();
         }
         System.out.println("actual " + result);
         System.out.println("actual size " + factor2.size());
@@ -473,20 +491,19 @@ public class Cov2lr {
         return gooddepth;
     }
 
-    private List<Double> splitQualitySamplesStream(Set<String> samp, double medDepth, Map<String, Map<String, Double>> norm) {
+    private List<Double> splitQualitySamplesStream(Set<String> samp, double medDepth, Set<String> badGenes) {
         List<Double> gooddepth = new LinkedList<>();
-        Set<String> bad = new HashSet<>();
-        for (Map.Entry<String, Map<String, Double>> entry : norm.entrySet()) {
+        NormIterator iterator = new NormIterator("temp.txt");
+        Normalization normalization = iterator.nextNorm();
+        while (normalization != null) {
             List<Double> temp = new LinkedList<>();
-            double kp80 = filterDataStream(samp, entry.getValue(), temp);
+            double kp80 = filterDataStream(samp, normalization.samples, temp);
             if (kp80 < medDepth * FAILEDFACTOR) {
-                bad.add(entry.getKey());
+                badGenes.add(normalization.gene);
             } else {
                 gooddepth.addAll(temp);
             }
-        }
-        for (String s : bad) {
-            norm.remove(s);
+            normalization = iterator.nextNorm();
         }
         return gooddepth;
     }
@@ -511,18 +528,26 @@ public class Cov2lr {
         return median.evaluate(toDoubleArray(depth));
     }
 
-    private double getMedDepthStream(Set<String> samp, Map<String, Map<String, Double>> norm) {
+    private double getMedDepthStream(Set<String> samp) {
         List<Double> depth = new ArrayList<>();
         double result = 0.0;
-        SampleIterator iterator = new SampleIterator(covFile, amplicon);
-        Sample sample = iterator.nextSample();
-        while (sample != null) {
-            double norm1 = Precision.round((sample.getCov() * factor.get(sample.getSample())), 2);
-            depth.add(norm1);
-            putInMap(norm, sample, norm1);
-            result += norm1;
-            samp.add(sample.getSample());
-            sample = iterator.nextSample();
+        try {
+            PrintWriter writer = new PrintWriter("temp.txt");
+
+            SampleIterator iterator = new SampleIterator(covFile, amplicon);
+            Sample sample = iterator.nextSample();
+            while (sample != null) {
+                double norm1 = Precision.round((sample.getCov() * factor.get(sample.getSample())), 2);
+                depth.add(norm1);
+                result += norm1;
+                samp.add(sample.getSample());
+                writer.write(sample.getName() + "\t" + sample.getSample() + "\t" + norm1 + "\n");
+                writer.flush();
+                sample = iterator.nextSample();
+            }
+            writer.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
 //        System.out.println("actual sum " + result);
 //        System.out.println("actual size " + depth.size());
