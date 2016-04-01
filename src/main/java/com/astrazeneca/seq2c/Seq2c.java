@@ -4,7 +4,6 @@ import org.apache.commons.cli.*;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +22,7 @@ public class Seq2c {
         }
 
         String[] cmdArgs = cmd.getArgs();
-        if (cmd.getArgList().isEmpty() || cmd.hasOption('h')) {
+        if (cmd.getArgList().isEmpty() || cmd.hasOption('h') || cmdArgs.length < 3) {
             help(options);
         }
         String sam2bamFile = cmdArgs[0];
@@ -39,24 +38,19 @@ public class Seq2c {
         try {
 
             int part = getRunPart(cmd);
-
-            final Collection<Gene> sqrlist = new ArrayList<>();
-
             // first part is not processed for -r = 2
             if (part != 2) {
 
                 final Map<String, String> sam2bam = Bam2Reads.parseFile(sam2bamFile);
 
-                boolean rewrite = false;
+                boolean append = false;
                 for (final Map.Entry<String, String> entry : sam2bam.entrySet()) {
                     Seq2cov sec2cov = new Seq2cov(bedFile, entry.getValue(), entry.getKey());
                     Collection<Gene> cov = sec2cov.process();
                     //print coverage to the file
-                    printCoverage(cov, covFile, rewrite);
-                    rewrite = true;
-                    sqrlist.addAll(cov);
+                    printCoverage(cov, covFile, append);
+                    append = true;
                 }
-
                 //if -r = 1, we finish here
                 if (part == 1) {
                     return;
@@ -67,11 +61,6 @@ public class Seq2c {
 
             //if only second part is launched, we read coverage from file
             Cov2lr cov2lr = new Cov2lr(true, stat, covFile, control);
-//            if (part == 2) {
-//                cov2lr = new Cov2lr(true, stat, covFile, control);
-//            } else {
-////                cov2lr = new Cov2lr(true, stat, sqrlist, control);
-//            }
             List<Sample> cov = cov2lr.doWork();
 
             Lr2gene lr2gene = new Lr2gene(cov);
@@ -85,8 +74,8 @@ public class Seq2c {
         }
     }
 
-    private static void printCoverage(Collection<Gene> sqrlist, String covFile, boolean rewrite) {
-        try (FileWriter writer = new FileWriter(covFile, rewrite)) {
+    private static void printCoverage(Collection<Gene> sqrlist, String covFile, boolean append) {
+        try (FileWriter writer = new FileWriter(covFile, append)) {
             writer.write("Sample\tGene\tChr\tStart\tEnd\tTag\tLength\tMeanDepth\n");
             writer.flush();
             for (Gene gene : sqrlist) {
