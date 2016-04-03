@@ -177,6 +177,7 @@ public class Cov2lr {
                 addLocus(sample);
             }
             iterator.close();
+            writer.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
