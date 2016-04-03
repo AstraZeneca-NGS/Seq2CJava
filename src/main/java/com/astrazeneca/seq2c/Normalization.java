@@ -1,11 +1,12 @@
 package com.astrazeneca.seq2c;
 
+import java.util.List;
 import java.util.Map;
 
 public class Normalization {
 
-    String gene;
-    Map<String, Double> samples;
+    String sample;
+    Map<String, List<Sample>> genes;
 
     @Override
     public boolean equals(Object o) {
@@ -14,13 +15,13 @@ public class Normalization {
 
         Normalization that = (Normalization) o;
 
-        return gene != null ? gene.equals(that.gene) : that.gene == null;
+        return sample != null ? sample.equals(that.sample) : that.sample == null;
 
     }
 
     @Override
     public int hashCode() {
-        return gene != null ? gene.hashCode() : 0;
+        return sample != null ? sample.hashCode() : 0;
     }
 }
 

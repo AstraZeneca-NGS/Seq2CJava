@@ -12,8 +12,6 @@ sourceCompatibility = "1.7"
 
 dependencies {
     compile 'commons-cli:commons-cli:1.2'
-    compile 'org.mapdb:mapdb:3.0.0-M3'
-    compile 'net.openhft:chronicle-map:3.7.0-rc'
     compile('com.github.samtools:htsjdk:1.140') {
         transitive = false
     }

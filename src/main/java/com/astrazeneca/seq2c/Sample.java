@@ -8,9 +8,9 @@ public class Sample implements Serializable{
     private String sample;
     private String gene;
     private String chr;
-    private long len;
-    private long start;
-    private long end;
+    private int len;
+    private int start;
+    private int end;
     private double cov;
     private double norm1;
     private double factor2;
@@ -39,7 +39,7 @@ public class Sample implements Serializable{
     private double norm3;
     private double norm3s;
 
-    public Sample(String name, String sample, String chr, long start, long end, String gene, long len, double cov) {
+    public Sample(String name, String sample, String chr, int start, int end, String gene, int len, double cov) {
         this.name = name;
         this.sample = sample;
         this.start = start;
@@ -50,24 +50,13 @@ public class Sample implements Serializable{
         this.chr = chr;
     }
 
-    public String getKey() {
-        return name + ":" + sample;
-    }
 
     public long getStart() {
         return this.start;
     }
 
-    public void setStart(long start) {
-        this.start = start;
-    }
-
     public long getEnd() {
         return end;
-    }
-
-    public void setEnd(long end) {
-        this.end = end;
     }
 
     public String getSample() {
@@ -82,19 +71,11 @@ public class Sample implements Serializable{
         return gene;
     }
 
-    public double getFactor2() {
-        return factor2;
-    }
-
-    public void setFactor2(double factor2) {
-        this.factor2 = factor2;
-    }
-
-    public long getLen() {
+    public int getLen() {
         return len;
     }
 
-    public void addLen(long len) {
+    public void addLen(int len) {
         this.len = this.len + len;
     }
 
@@ -111,20 +92,12 @@ public class Sample implements Serializable{
         return sample + " " + len + " " + cov;
     }
 
-    public double getNorm1() {
-        return norm1;
-    }
-
     public double getNorm1b() {
         return norm1b;
     }
 
     public void setNorm1b(double norm1b) {
         this.norm1b = norm1b;
-    }
-
-    public double getNorm2() {
-        return norm2;
     }
 
     public void setNorm2(double norm2) {
@@ -139,20 +112,13 @@ public class Sample implements Serializable{
         this.norm3 = norm3;
     }
 
-    public void setNorm1(double norm1) {
-        this.norm1 = norm1;
-    }
-
     public String getResultString() {
         String format = "%.2f%n";
         StringBuilder builder = new StringBuilder();
         builder.append(sample).append("\t");
         builder.append(getTitle()).append("\t");
-        builder.append(cov).append("\t");
-        builder.append(String.format(format, norm1).trim()).append("\t");
-        builder.append(String.format(format, norm1b).trim()).append("\t");
-        builder.append(String.format(format, norm2).trim()).append("\t");
         builder.append(String.format(format, norm3).trim()).append("\t");
+        builder.append(String.format(format, norm3s).trim()).append("\t");
 
         return builder.toString();
     }
@@ -172,14 +138,6 @@ public class Sample implements Serializable{
      */
     public String getChr() {
         return chr;
-    }
-
-    /**
-     * @param chr
-     *            the chr to set
-     */
-    public void setChr(String chr) {
-        this.chr = chr;
     }
 
     /**

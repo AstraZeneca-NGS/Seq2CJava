@@ -184,4 +184,16 @@ public class Sig {
         this.sig = sig;
     }
 
+    public StringBuilder getName() {
+        StringBuilder result = new StringBuilder();
+        result.append(getSig()).append("\t");
+        result.append(getBp()).append("\t");
+        result.append(getCn()).append("\t");
+        result.append(getBpi()).append("\t");
+        result.append(getTotal()).append("\t");
+        result.append(getSiglr()).append("\t");
+        result.append(getSigdiff()).append("\t");
+        result.append(getSigseg());
+        return result;
+    }
 }

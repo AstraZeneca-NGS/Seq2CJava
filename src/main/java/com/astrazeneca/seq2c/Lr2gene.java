@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 public class Lr2gene {
 
-    private List<Sample> inputGenes;
+    private Map<String, Locus> genes;
     private double MINMAD = 10;
     private double MINDIFF = 0.7;
     private double PVALUE = 0.00001;
@@ -28,6 +28,8 @@ public class Lr2gene {
 
     private static final Pattern SLASH_D = Pattern.compile("\\d");
 
+    private final String tempFile = "statistics.txt";
+
     private static final java.util.Comparator<double[]> DIS_COMPARATOR = new java.util.Comparator<double[]>() {
         @Override
         public int compare(double[] a, double[] b) {
@@ -35,117 +37,22 @@ public class Lr2gene {
         }
     };
 
+    private Lr2gene() {}
 
-    private Lr2gene() {
-    }
-
-
-    public static void main(String[] args) throws ParseException {
-        CommandLine cmd = buildCommandLine(args);
-
-        // TODO
-        if (cmd.getArgList().isEmpty()) {
-            help(getOptions());
-        }
-        String fileName = cmd.getArgs()[0];
-        List<Sample> samples = new ArrayList<>();
-
-        Lr2gene lr2gene = new Lr2gene(samples);
-        lr2gene.init(cmd);
-        lr2gene.process();
-    }
-
-    public Lr2gene(List<Sample> sq) {
-        this.inputGenes = sq;
-    }
-
-    private static class Locus {
-        String geneName;
-        String chr;
-        long start;
-        long end;
-        long length;
-
-        Locus(String geneName, long start, long end, String chr) {
-            this.geneName = geneName;
-            this.chr = chr;
-            this.start = start;
-            this.end = end;
-        }
-
-        void setLength(long length) {
-            this.length = length;
-        }
-
-        void addLength(long length) {
-            this.length += length;
-        }
-
-        public void shiftStart(long start) {
-            if (this.start > start) {
-                this.start = start;
-            }
-        }
-
-        public void shiftEnd(long end) {
-            if (this.end < end) {
-                this.end = end;
-            }
-        }
+    public Lr2gene(Map<String, Locus> locusMap) {
+        this.genes = locusMap;
     }
 
     public void process() {
-        Map<String, HashMap<String, ArrayList<Sample>>> g2amp = new HashMap<>();
-        Map<String, Locus> loc = new HashMap<>();
-
-        // System.out.println("inputGenes" + inputGenes.size());
-        for (Sample sqr : inputGenes) {
-            Locus locus = new Locus(sqr.getGene(), sqr.getStart(), sqr.getEnd(), sqr.getChr());
-            // locArr[3] = String.valueOf(sqr.getEnd() - sqr.getStart() + 1);
-            long len = sqr.getEnd() - sqr.getStart() + 1;
-            locus.setLength(len);
-
-            // implemented according to perl variant: the length of one gene is summed up
-            // delete this block, if length of gene should not be summed up
-            if (loc.containsKey(sqr.getGene())) {
-                Locus previous = loc.get(sqr.getGene());
-                locus.addLength(previous.length);
-                locus.shiftStart(previous.start);
-                locus.shiftEnd(previous.end);
-            }
-            // end
-
-            HashMap<String, ArrayList<Sample>> gq;
-            ArrayList<Sample> sq2amparr;
-            if (g2amp.containsKey(sqr.getSample())) {
-                gq = g2amp.get(sqr.getSample());
-                if (gq.containsKey(sqr.getGene())) {
-                    sq2amparr = gq.get(sqr.getGene());
-                    sq2amparr.add(sqr);
-
-                } else {
-
-                    sq2amparr = new ArrayList<>();
-                    sq2amparr.add(sqr);
-                }
-
-            } else {
-                gq = new HashMap<>();
-                sq2amparr = new ArrayList<>();
-                sq2amparr.add(sqr);
-
-            }
-            gq.put(sqr.getGene(), sq2amparr);
-            g2amp.put(sqr.getSample(), gq);
-            loc.put(sqr.getGene(), locus);
-        }
         int j = 0;
-        for (Map.Entry<String, HashMap<String, ArrayList<Sample>>> entry : g2amp.entrySet()) {
-            String Sample = entry.getKey();
-            Map<String, ArrayList<Sample>> gq = entry.getValue();
-            for (Map.Entry<String, ArrayList<Sample>> entry2 : gq.entrySet()) {
+        NormIterator iterator = new NormIterator(tempFile);
+        Normalization normalization = iterator.nextNorm();
+        while (normalization != null) {
+            String sample = normalization.sample;
+            Map<String, List<Sample>> gq = normalization.genes;
+            for (Map.Entry<String, List<Sample>> entry2 : gq.entrySet()) {
                 String gene = entry2.getKey();
-                ArrayList<Sample> sq2amparr = entry2.getValue();
+                List<Sample> sq2amparr = entry2.getValue();
 
                 Collections.sort(sq2amparr, new Comparator<Sample>() {
                     @Override
@@ -183,24 +90,25 @@ public class Lr2gene {
                     long eend = sq2amparr.get(exons.length - 1).getEnd();
                     sig.setSigseg(sig.getSigseg() + (estart - eend));
                 }
-                Locus locus = loc.get(gene);
-                String locStr = Sample + "\t" + gene + "\t" + locus.chr + "\t" + locus.start + "\t" + locus.end + "\t" + locus.length + "\t";
-                String str1;
+                Locus locus = genes.get(gene);
+                StringBuilder locStr = new StringBuilder();
+                locStr.append(sample).append("\t").append(gene).append("\t").append(locus.getName()).append("\t");
                 if (sig.getSig() != -1) {
-                    str1 = lr_med + "\t" + sig.getSig() + "\t" + sig.getBp() + "\t" + sig.getCn() + "\t" + sig.getBpi() + "\t" + sig.getTotal() + "\t" + sig.getSiglr() + "\t" + sig.getSigdiff() + "\t" + sig.getSigseg();
+                    locStr.append(lr_med).append("\t").append(sig.getName());
                 } else {
-                    str1 = lr_med + "\t\t\t\t\t" + sig.getTotal();
+                    locStr.append(lr_med).append("\t\t\t\t\t").append(sig.getTotal());
                 }
 
                 if (j == 0)
                     System.out.println("Sample\tGene\tChr\tStart\tEnd\tLength\tLog2ratio\tSig\tBP_Whole\tAmp_Del\tAb_Seg\tTotal_Seg\tAb_log2ratio\tLog2r_Diff\tAb_Seg_Loc\tAb_Samples\tAb_Samples_Pcnt");
                 j++;
-                System.out.println(locStr + str1);
+                System.out.println(locStr);
             }
+            normalization = iterator.nextNorm();
         }
     }
 
-    private Sig checkBP(ArrayList<Sample> segs) {
+    private Sig checkBP(List<Sample> segs) {
         double[][] arr = new double[segs.size()][3];
         double[] lr = new double[segs.size()];
         int i = 0;
@@ -575,7 +483,7 @@ public class Lr2gene {
                         + "The " + Lr2gene.class.getSimpleName() + " program will convert a coverage file to copy number profile.",
 
                 "\nArguments are:\n"
-                        + "mapping_reads: Required. A file containing # of mapped or sequenced reads for samples.  At least two columns.\n"
+                        + "mapping_reads: Required. A file containing # of mapped or sequenced reads for genes.  At least two columns.\n"
                         + "               First is the sample name, 2nd is the number of mapped or sequenced reads.\n"
                         + "coverage.txt:  The coverage output file from checkCov.pl script.  Can also take from standard in or more than\n"
                         + "               one file.\n\n",
@@ -646,14 +554,14 @@ public class Lr2gene {
         options.addOption(OptionBuilder.withArgName("float (0-1)")
                 .hasArg()
                 .withType(Number.class)
-                .withDescription("If a breakpoint has been detected more than \"float\" fraction of samples, it's considered false positive and removed.\n"
+                .withDescription("If a breakpoint has been detected more than \"float\" fraction of genes, it's considered false positive and removed.\n"
                         + "Default: " + DEFAULTS.MAXRATE + ", or 10%.  Use in combination with -N")
                 .isRequired(false)
                 .create("R"));
         options.addOption(OptionBuilder.withArgName("int")
                 .hasArg()
                 .withType(Number.class)
-                .withDescription("If a breakpoint has been detected more than \"int\" samples, it's considered false positives and removed.\n"
+                .withDescription("If a breakpoint has been detected more than \"int\" genes, it's considered false positives and removed.\n"
                         + "Default: " + (int) DEFAULTS.MAXCNT + ".  Use in combination with -R.")
                 .isRequired(false)
                 .create("N"));

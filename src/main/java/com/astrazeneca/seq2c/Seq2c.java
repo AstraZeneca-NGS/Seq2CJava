@@ -5,7 +5,6 @@ import org.apache.commons.cli.*;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 public class Seq2c {
@@ -38,7 +37,7 @@ public class Seq2c {
         try {
 
             int part = getRunPart(cmd);
-            // first part is not processed for -r = 2
+            // first part is not processed for -r == 2
             if (part != 2) {
 
                 final Map<String, String> sam2bam = Bam2Reads.parseFile(sam2bamFile);
@@ -61,13 +60,12 @@ public class Seq2c {
 
             //if only second part is launched, we read coverage from file
             Cov2lr cov2lr = new Cov2lr(true, stat, covFile, control);
-            List<Sample> cov = cov2lr.doWork();
+            cov2lr.doWork();
 
-            Lr2gene lr2gene = new Lr2gene(cov);
+            Lr2gene lr2gene = new Lr2gene(cov2lr.getLocusMap());
             lr2gene.init(cmd);
-            lr2gene.setUseControl(cov2lr.isUseControlSamples());
+            lr2gene.setUseControl(cov2lr.useControlSamples());
             lr2gene.process();
-
 
         } finally {
             Dispatcher.shutdown();
@@ -102,7 +100,7 @@ public class Seq2c {
         formater.printHelp(150,
                 Seq2c.class.getSimpleName() + " sample2bam.txt regions.bed coverage.txt [sample_name1[:sample_name2]] [-options]\n",
                 "Arguments are:\n"
-                        + "sample2bam.txt:      Required. A file containing list of samples and bam files, each sample at new line.  At least two columns. \nFirst is the sample name, 2nd is the bam file name.\n"
+                        + "sample2bam.txt:      Required. A file containing list of genes and bam files, each sample at new line.  At least two columns. \nFirst is the sample name, 2nd is the bam file name.\n"
                         + "regions.bed:         Required. A bed file with regions of interest. At least 4 columns.\n"
                         + "coverage.txt:        Required. A file for writing coverage output.\n"
                         + "sample_name:         Control sample names. For multiple controls, separate them using ':'.\n\n",
@@ -153,7 +151,7 @@ public class Seq2c {
 
     }
 
-    public static int getRunPart(CommandLine cmd) throws ParseException  {
+    private static int getRunPart(CommandLine cmd) throws ParseException  {
         int part = 0;
         if (cmd.hasOption("r")) {
             Object value = cmd.getParsedOptionValue("r");

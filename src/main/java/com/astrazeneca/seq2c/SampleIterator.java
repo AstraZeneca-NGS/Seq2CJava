@@ -4,9 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-/**
- * Created by Mariia_Zueva on 3/8/2016.
- */
 public class SampleIterator {
 
     boolean amplicon;
@@ -93,19 +90,18 @@ public class SampleIterator {
         String[] sampleLines = currentLine.split("\\s+");
         if (sampleLines.length != 8) return null;
 
-        String sampleName = sampleLines[0];
-        String gene = sampleLines[1];
-        String chr = sampleLines[2];
-        long start = Long.parseLong(sampleLines[3]);
-        long end = Long.parseLong(sampleLines[4]);
-        long len = Long.parseLong(sampleLines[6]);
+        String sampleName = sampleLines[0].intern();
+        String gene = sampleLines[1].intern();
+        String chr = sampleLines[2].intern();
+        int start = Integer.parseInt(sampleLines[3]);
+        int end = Integer.parseInt(sampleLines[4]);
+        int len = Integer.parseInt(sampleLines[6]);
         double depth = Double.parseDouble(sampleLines[7]);
 
         String key = amplicon ? join(" ", gene, chr, Long.toString(start), Long.toString(end), Long.toString(len)) : gene;
         Sample sample = new Sample(key, sampleName, chr, start, end, gene, len, depth);
         return sample;
     }
-
 
     private static String join(String delim, Object... array) {
         StringBuilder builder = new StringBuilder();
