@@ -99,6 +99,7 @@ public class Cov2lr {
         Set<String> badGenes = new HashSet<>();
         List<Double> gooddepth = splitQualitySamples(sampleNames, medDepth, badGenes);
         double medDepthGood = median.evaluate(toDoubleArray(gooddepth));
+        gooddepth.clear();
 
         Map<String, Double> factor = getFactor2(medDepthGood, badGenes);
 

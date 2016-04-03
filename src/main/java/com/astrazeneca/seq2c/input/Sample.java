@@ -12,8 +12,6 @@ public class Sample implements Serializable, FileStoredData{
     private int start;
     private int end;
     private double cov;
-    private double norm1;
-    private double factor2;
     private double norm1b;
     private double norm2;
 

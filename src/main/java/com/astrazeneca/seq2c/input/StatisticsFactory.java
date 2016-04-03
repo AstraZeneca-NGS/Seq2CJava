@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by Mariia_Zueva on 4/4/2016.
- */
 public class StatisticsFactory extends FileStoredDataFactory {
 
     @Override
@@ -16,8 +13,8 @@ public class StatisticsFactory extends FileStoredDataFactory {
         String[] sampleLines = line.split("\\t");
         if (sampleLines.length < 8) return null;
 
-        String sample = sampleLines[0];
-        String gene = sampleLines[1];
+        String sample = sampleLines[0].intern();
+        String gene = sampleLines[1].intern();
         Sample sampleObj = readSample(line);
 
         SampleStatistics statistics = new SampleStatistics(sample);
