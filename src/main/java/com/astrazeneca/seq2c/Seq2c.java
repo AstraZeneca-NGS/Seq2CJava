@@ -9,6 +9,8 @@ import java.util.Map;
 
 public class Seq2c {
 
+    private static final String TEMP_FILE = "statistics.txt";
+
     public static void main(String[] args) throws Exception {
 
         Options options = buildCmdOptions();
@@ -59,10 +61,10 @@ public class Seq2c {
             Map<String, Long> stat = Bam2Reads.printStatsToFile(sam2bamFile);
 
             //if only second part is launched, we read coverage from file
-            Cov2lr cov2lr = new Cov2lr(true, stat, covFile, control);
+            Cov2lr cov2lr = new Cov2lr(true, stat, covFile, control, TEMP_FILE);
             cov2lr.doWork();
 
-            Lr2gene lr2gene = new Lr2gene(cov2lr.getLocusMap());
+            Lr2gene lr2gene = new Lr2gene(cov2lr.getLocusMap(), TEMP_FILE);
             lr2gene.init(cmd);
             lr2gene.setUseControl(cov2lr.useControlSamples());
             lr2gene.process();

@@ -1,5 +1,6 @@
 package com.astrazeneca.seq2c;
 
+import com.astrazeneca.seq2c.input.FileDataIterator;
 import org.apache.commons.cli.*;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.inference.TTest;
@@ -28,7 +29,7 @@ public class Lr2gene {
 
     private static final Pattern SLASH_D = Pattern.compile("\\d");
 
-    private final String tempFile = "statistics.txt";
+    private String tempFile;
 
     private static final java.util.Comparator<double[]> DIS_COMPARATOR = new java.util.Comparator<double[]>() {
         @Override
@@ -37,19 +38,21 @@ public class Lr2gene {
         }
     };
 
-    private Lr2gene() {}
+    private Lr2gene() {
+    }
 
-    public Lr2gene(Map<String, Locus> locusMap) {
+    public Lr2gene(Map<String, Locus> locusMap, String file) {
         this.genes = locusMap;
+        this.tempFile = file;
     }
 
     public void process() {
         int j = 0;
-        NormIterator iterator = new NormIterator(tempFile);
-        Normalization normalization = iterator.nextNorm();
-        while (normalization != null) {
-            String sample = normalization.sample;
-            Map<String, List<Sample>> gq = normalization.genes;
+        FileDataIterator<SampleStatistics> iterator = new FileDataIterator(tempFile, "statistics");
+        while (iterator.hasNext()) {
+            SampleStatistics statistics = iterator.next();
+            String sample = statistics.getSample();
+            Map<String, List<Sample>> gq = statistics.getGenes();
             for (Map.Entry<String, List<Sample>> entry2 : gq.entrySet()) {
                 String gene = entry2.getKey();
                 List<Sample> sq2amparr = entry2.getValue();
@@ -104,8 +107,8 @@ public class Lr2gene {
                 j++;
                 System.out.println(locStr);
             }
-            normalization = iterator.nextNorm();
         }
+        iterator.close();
     }
 
     private Sig checkBP(List<Sample> segs) {

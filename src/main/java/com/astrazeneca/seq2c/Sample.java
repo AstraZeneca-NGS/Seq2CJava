@@ -1,8 +1,10 @@
 package com.astrazeneca.seq2c;
 
+import com.astrazeneca.seq2c.input.FileStoredData;
+
 import java.io.Serializable;
 
-public class Sample implements Serializable{
+public class Sample implements Serializable, FileStoredData{
 
     private String name;
     private String sample;
@@ -155,4 +157,10 @@ public class Sample implements Serializable{
         this.norm3s = norm3s;
     }
 
+    @Override
+    public void addNextObject(FileStoredData next) {
+        Sample sample = (Sample)next;
+        addLen(sample.getLen());
+        addCov(sample.getCov());
+    }
 }

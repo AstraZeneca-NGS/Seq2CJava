@@ -1,12 +1,14 @@
 package com.astrazeneca.seq2c;
 
+import com.astrazeneca.seq2c.input.FileDataIterator;
 import org.apache.commons.math3.analysis.function.Log;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.util.Precision;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.*;
 
 /**
@@ -38,13 +40,12 @@ public class Cov2lr {
     private Map<String, Long> mappingReads;
 
     /**
-     * Normalization factor for each sample calculated as mean number of reads / number of reads per sample Key = name of sample
+     * SampleStatistics factor for each sample calculated as mean number of reads / number of reads per sample Key = name of sample
      * Value = factor
      */
     private Map<String, Double> factor;
 
     private Map<String, Map<String, Double>> geneStatistics;
-    private Map<String, Double> controlSamplesStatitics;
     /**
      * The failed factor for individual amplicons. If (the 80th percentile of an amplicon depth)/(the global median depth) is less
      * than the argument, the amplicon is considered failed and won't be used in calculation. Default: 0.2.
@@ -53,10 +54,6 @@ public class Cov2lr {
 
     private final String covFile;
     private final String tempFile;
-
-    public Map<String, Locus> getLocusMap() {
-        return locusMap;
-    }
 
     private final Map<String, Locus> locusMap;
 
@@ -67,14 +64,12 @@ public class Cov2lr {
      * @param controlSamples = multiple controls are allowed, which are separated by ":"
      */
 
-    public Cov2lr(boolean amplicon, Map<String, Long> stat, String covFile, String controlSamples) {
+    public Cov2lr(boolean amplicon, Map<String, Long> stat, String covFile, String controlSamples, String tmpFile) {
         init(amplicon, stat);
         initFactor(controlSamples);
         this.covFile = covFile;
-        this.tempFile = "statistics.txt";
+        this.tempFile = tmpFile;
         this.locusMap = new HashMap<>();
-        this.controlSamplesStatitics = new HashMap<>();
-
     }
 
     private void init(boolean amplicon, Map<String, Long> stat) {
@@ -82,7 +77,6 @@ public class Cov2lr {
         this.mappingReads = stat;
         this.geneStatistics = new HashMap<>();
     }
-
 
     private void initFactor(String controlSamples) {
         this.factor = new LinkedHashMap<>();
@@ -92,7 +86,6 @@ public class Cov2lr {
         }
     }
 
-
     /**
      * Main method, makes the statistics calculation according to the algorithm print result to the Standart output
      */
@@ -100,7 +93,7 @@ public class Cov2lr {
     public void doWork() {
 
         Set<String> sampleNames = new HashSet<>();
-        double medDepth = getMedDepth(sampleNames);
+        double medDepth = readCoverageAndGetMedDepth(sampleNames);
 
         Set<String> badGenes = new HashSet<>();
         List<Double> gooddepth = splitQualitySamples(sampleNames, medDepth, badGenes);
@@ -136,6 +129,7 @@ public class Cov2lr {
     }
 
     private double prepareControlSamples(Map<String, Double> factor2) {
+        if (!useControlSamples()) return 0.0;
         List<Double> list = new LinkedList<>();
         for (String s : controlSamples) {
             for (Map.Entry<String, Map<String, Double>> entry : geneStatistics.entrySet()) {
@@ -160,12 +154,11 @@ public class Cov2lr {
         try {
             PrintWriter writer = new PrintWriter(tempFile);
             boolean useControlSamples = useControlSamples();
-            SampleIterator iterator = new SampleIterator(covFile, amplicon);
-            Sample sample = iterator.nextSample();
-            while (sample != null) {
+            FileDataIterator<Sample> iterator = new FileDataIterator(covFile, "sample", amplicon);
+            while (iterator.hasNext()) {
+                Sample sample = iterator.next();
                 String key = sample.getName();
                 if (!factor2.containsKey(key)) {
-                    sample = iterator.nextSample();
                     continue;
                 }
                 double fact2 = factor2.get(key);
@@ -181,8 +174,8 @@ public class Cov2lr {
                 writer.write(sample.getResultString() + "\n");
                 writer.flush();
                 addLocus(sample);
-                sample = iterator.nextSample();
             }
+            iterator.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -254,17 +247,17 @@ public class Cov2lr {
         return gooddepth;
     }
 
-    private double getMedDepth(Set<String> samp) {
+    private double readCoverageAndGetMedDepth(Set<String> samp) {
         List<Double> depth = new ArrayList<>();
-        SampleIterator iterator = new SampleIterator(covFile, amplicon);
-        Sample sample = iterator.nextSample();
-        while (sample != null) {
+        FileDataIterator<Sample> iterator = new FileDataIterator(covFile, "sample", amplicon);
+        while (iterator.hasNext()) {
+            Sample sample = iterator.next();
             double norm1 = Precision.round((sample.getCov() * factor.get(sample.getSample())), 2);
             depth.add(norm1);
             samp.add(sample.getSample());
             putInMap(sample, norm1);
-            sample = iterator.nextSample();
         }
+        iterator.close();
         return median.evaluate(toDoubleArray(depth));
     }
 
@@ -297,5 +290,9 @@ public class Cov2lr {
             array[i++] = d;
         }
         return array;
+    }
+
+    public Map<String, Locus> getLocusMap() {
+        return locusMap;
     }
 }
