@@ -1,8 +1,5 @@
 package com.astrazeneca.seq2c.input;
 
-import com.astrazeneca.seq2c.SampleStatistics;
-import com.astrazeneca.seq2c.Sample;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

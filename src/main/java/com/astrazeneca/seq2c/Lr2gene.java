@@ -1,6 +1,8 @@
 package com.astrazeneca.seq2c;
 
 import com.astrazeneca.seq2c.input.FileDataIterator;
+import com.astrazeneca.seq2c.input.Sample;
+import com.astrazeneca.seq2c.input.SampleStatistics;
 import org.apache.commons.cli.*;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.inference.TTest;

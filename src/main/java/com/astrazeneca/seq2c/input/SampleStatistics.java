@@ -1,6 +1,4 @@
-package com.astrazeneca.seq2c;
-
-import com.astrazeneca.seq2c.input.FileStoredData;
+package com.astrazeneca.seq2c.input;
 
 import java.util.ArrayList;
 import java.util.List;

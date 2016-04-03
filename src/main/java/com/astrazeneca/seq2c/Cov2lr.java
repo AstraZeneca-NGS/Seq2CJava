@@ -1,6 +1,7 @@
 package com.astrazeneca.seq2c;
 
 import com.astrazeneca.seq2c.input.FileDataIterator;
+import com.astrazeneca.seq2c.input.Sample;
 import org.apache.commons.math3.analysis.function.Log;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.rank.Median;

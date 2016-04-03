@@ -1,7 +1,5 @@
 package com.astrazeneca.seq2c.input;
 
-import com.astrazeneca.seq2c.Sample;
-
 public class SampleFactory extends FileStoredDataFactory {
     private boolean amplicon;
 
