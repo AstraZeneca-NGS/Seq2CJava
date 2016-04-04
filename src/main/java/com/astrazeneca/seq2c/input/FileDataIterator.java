@@ -10,20 +10,16 @@ public class FileDataIterator<T extends FileStoredData> implements Iterator<File
     private BufferedReader bufferReader;
     private T next;
     private T current;
-    private FileStoredDataFactory factory;
+    private FileStoredDataFactory<T> factory;
 
-    public FileDataIterator(String fileName, String type, boolean amplicon) {
+    public FileDataIterator(String fileName, FileStoredDataFactory factory) {
         try {
             bufferReader = new BufferedReader(new FileReader(fileName));
-            factory = FileStoredDataFactory.getFactory(type, amplicon);
+            this.factory = factory;
             current = loadNext();
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public FileDataIterator(String tempFile, String statistics) {
-        this(tempFile, statistics, false);
     }
 
     @Override
@@ -58,7 +54,7 @@ public class FileDataIterator<T extends FileStoredData> implements Iterator<File
     private T readNextObject() {
         String line = getNextLine();
         if (line == null) return null;
-        next = (T)factory.createObjectFromLine(line);
+        next = factory.createObjectFromLine(line);
         return next;
     }
 

@@ -1,6 +1,6 @@
 package com.astrazeneca.seq2c.input;
 
-public class SampleFactory extends FileStoredDataFactory {
+public class SampleFactory extends FileStoredDataFactory<Sample> {
     private boolean amplicon;
 
     public SampleFactory(boolean amplicon) {
@@ -9,7 +9,7 @@ public class SampleFactory extends FileStoredDataFactory {
     }
 
     @Override
-    public FileStoredData createObjectFromLine(String line) {
+    public Sample createObjectFromLine(String line) {
         if (line == null) return null;
 
         String[] sampleLines = line.split("\\s+");

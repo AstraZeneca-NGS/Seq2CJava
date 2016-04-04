@@ -1,8 +1,6 @@
 package com.astrazeneca.seq2c;
 
-import com.astrazeneca.seq2c.input.FileDataIterator;
-import com.astrazeneca.seq2c.input.Sample;
-import com.astrazeneca.seq2c.input.SampleStatistics;
+import com.astrazeneca.seq2c.input.*;
 import org.apache.commons.cli.*;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.inference.TTest;
@@ -50,7 +48,8 @@ public class Lr2gene {
 
     public void process() {
         int j = 0;
-        FileDataIterator<SampleStatistics> iterator = new FileDataIterator(tempFile, "statistics");
+        FileStoredDataFactory<SampleStatistics> factory = new StatisticsFactory();
+        FileDataIterator<SampleStatistics> iterator = new FileDataIterator(tempFile, factory);
         while (iterator.hasNext()) {
             SampleStatistics statistics = iterator.next();
             String sample = statistics.getSample();
