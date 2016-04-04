@@ -24,8 +24,7 @@ public class SampleFactory extends FileStoredDataFactory<Sample> {
         double depth = Double.parseDouble(sampleLines[7]);
 
         String key = amplicon ? join(" ", gene, chr, Long.toString(start), Long.toString(end), Long.toString(len)) : gene;
-        Sample sample = new Sample(key, sampleName, chr, start, end, gene, len, depth);
-        return sample;
+        return new Sample(key, sampleName, chr, start, end, gene, len, depth);
     }
 
     private static String join(String delim, Object... array) {

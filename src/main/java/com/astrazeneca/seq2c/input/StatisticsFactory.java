@@ -13,8 +13,8 @@ public class StatisticsFactory extends FileStoredDataFactory<SampleStatistics> {
         String[] sampleLines = line.split("\\t");
         if (sampleLines.length < 8) return null;
 
-        String sample = sampleLines[0].intern();
-        String gene = sampleLines[1].intern();
+        String sample = sampleLines[0];
+        String gene = sampleLines[1];
         Sample sampleObj = readSample(line);
 
         SampleStatistics statistics = new SampleStatistics(sample);
@@ -40,8 +40,7 @@ public class StatisticsFactory extends FileStoredDataFactory<SampleStatistics> {
         int end = Integer.parseInt(sampleLines[4]);
         int len = Integer.parseInt(sampleLines[5]);
 
-        String key = gene;
-        Sample sample = new Sample(key, sampleName, chr, start, end, gene, len, 0.0);
+        Sample sample = new Sample(gene, sampleName, chr, start, end, gene, len, 0.0);
         sample.setNorm3(Double.parseDouble(sampleLines[6]));
         sample.setNorm3s(Double.parseDouble(sampleLines[7]));
         return sample;

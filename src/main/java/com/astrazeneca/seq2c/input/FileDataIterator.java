@@ -12,7 +12,7 @@ public class FileDataIterator<T extends FileStoredData> implements Iterator<File
     private T current;
     private FileStoredDataFactory<T> factory;
 
-    public FileDataIterator(String fileName, FileStoredDataFactory factory) {
+    public FileDataIterator(String fileName, FileStoredDataFactory<T> factory) {
         try {
             bufferReader = new BufferedReader(new FileReader(fileName));
             this.factory = factory;
@@ -35,20 +35,18 @@ public class FileDataIterator<T extends FileStoredData> implements Iterator<File
     }
 
     private T loadNext() {
-        while (true) {
-            T data;
-            if (next == null) {
-                data = readNextObject();
-            } else {
-                data = next;
-            }
-            next = readNextObject();
-            while (next != null && data.equals(next)) {
-                data.addNextObject(next);
-                next = readNextObject();
-            }
-            return data;
+        T data;
+        if (next == null) {
+            data = readNextObject();
+        } else {
+            data = next;
         }
+        next = readNextObject();
+        while (next != null && data.equals(next)) {
+            data.addNextObject(next);
+            next = readNextObject();
+        }
+        return data;
     }
 
     private T readNextObject() {
