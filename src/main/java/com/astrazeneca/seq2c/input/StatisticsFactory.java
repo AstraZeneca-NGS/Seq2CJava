@@ -33,9 +33,9 @@ public class StatisticsFactory extends FileStoredDataFactory<SampleStatistics> {
         String[] sampleLines = currentLine.split("\\s+");
         if (sampleLines.length < 8) return null;
 
-        String sampleName = sampleLines[0];
-        String gene = sampleLines[1];
-        String chr = sampleLines[2];
+        String sampleName = sampleLines[0].intern();
+        String gene = sampleLines[1].intern();
+        String chr = sampleLines[2].intern();
         int start = Integer.parseInt(sampleLines[3]);
         int end = Integer.parseInt(sampleLines[4]);
         int len = Integer.parseInt(sampleLines[5]);

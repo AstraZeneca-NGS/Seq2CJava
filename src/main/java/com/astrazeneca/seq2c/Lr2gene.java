@@ -48,8 +48,7 @@ public class Lr2gene {
 
     public void process() {
         int j = 0;
-        FileStoredDataFactory<SampleStatistics> factory = new StatisticsFactory();
-        FileDataIterator<SampleStatistics> iterator = new FileDataIterator(tempFile, factory);
+        FileDataIterator<SampleStatistics> iterator = new FileDataIterator(tempFile, new StatisticsFactory());
         while (iterator.hasNext()) {
             SampleStatistics statistics = iterator.next();
             String sample = statistics.getSample();

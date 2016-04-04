@@ -61,6 +61,8 @@ public class Cov2lr {
     private final Map<String, Locus> locusMap;
     private final FileStoredDataFactory<Sample> factory = new SampleFactory(amplicon);
 
+    private FileStoredDataFactory<Sample> factory;
+
     /**
      * Constructor reads the input files and constructs genes, genes, factor maps
      *
@@ -74,6 +76,7 @@ public class Cov2lr {
         this.covFile = covFile;
         this.tempFile = tmpFile;
         this.locusMap = new HashMap<>();
+        this.factory = new SampleFactory(amplicon);
     }
 
     private void init(boolean amplicon, Map<String, Long> stat) {
