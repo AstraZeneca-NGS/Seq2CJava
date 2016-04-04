@@ -17,9 +17,10 @@ public class Dispatcher {
             return;
         }
 
-        es = new ThreadPoolExecutor(threadsCount, threadsCount,
-                0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>());
+//        es = new ThreadPoolExecutor(threadsCount, threadsCount,
+//                0L, TimeUnit.MILLISECONDS,
+//                new LinkedBlockingQueue<Runnable>());
+        es = Executors.newFixedThreadPool(threadsCount);
         Dispatcher.threadsCount = threadsCount;
     }
 
