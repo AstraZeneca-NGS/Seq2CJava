@@ -60,7 +60,6 @@ public class Seq2c {
 
             Map<String, Long> stat = Bam2Reads.printStatsToFile(sam2bamFile);
 
-            //if only second part is launched, we read coverage from file
             Cov2lr cov2lr = new Cov2lr(true, stat, covFile, control, TEMP_FILE);
             cov2lr.doWork();
 
