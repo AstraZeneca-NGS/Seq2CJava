@@ -15,7 +15,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Math.max;
-import static java.lang.Math.min;
 
 public class Seq2cov {
 
@@ -80,7 +79,7 @@ public class Seq2cov {
         Collection<Gene> resultBam = workersCount > 1 ? new ConcurrentLinkedDeque<Gene>() : new ArrayList<Gene>();
 
         BlockingQueue<Worker> workers = new LinkedBlockingQueue<>();
-        workers.add(new Worker(SamReaderFactory.makeDefault().open(new File(bamfileName))));
+        workers.add(new Worker(SamReaderFactory.makeDefault().validationStringency(ValidationStringency.SILENT).open(new File(bamfileName))));
         boolean genome = isHGenome(workers.peek().sam.getFileHeader().getSequenceDictionary().getSequences());
 
         for (Seq2covGene gn : resultBed.values()) {
