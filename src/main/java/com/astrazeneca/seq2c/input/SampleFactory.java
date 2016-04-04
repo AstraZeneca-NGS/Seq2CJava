@@ -1,6 +1,6 @@
 package com.astrazeneca.seq2c.input;
 
-public class SampleFactory extends FileStoredDataFactory {
+public class SampleFactory extends FileStoredDataFactory<Sample> {
     private boolean amplicon;
 
     public SampleFactory(boolean amplicon) {
@@ -9,7 +9,7 @@ public class SampleFactory extends FileStoredDataFactory {
     }
 
     @Override
-    public FileStoredData createObjectFromLine(String line) {
+    public Sample createObjectFromLine(String line) {
         if (line == null) return null;
 
         String[] sampleLines = line.split("\\s+");
@@ -24,8 +24,7 @@ public class SampleFactory extends FileStoredDataFactory {
         double depth = Double.parseDouble(sampleLines[7]);
 
         String key = amplicon ? join(" ", gene, chr, Long.toString(start), Long.toString(end), Long.toString(len)) : gene;
-        Sample sample = new Sample(key, sampleName, chr, start, end, gene, len, depth);
-        return sample;
+        return new Sample(key, sampleName, chr, start, end, gene, len, depth);
     }
 
     private static String join(String delim, Object... array) {

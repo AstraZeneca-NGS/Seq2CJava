@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class StatisticsFactory extends FileStoredDataFactory {
+public class StatisticsFactory extends FileStoredDataFactory<SampleStatistics> {
 
     @Override
-    public FileStoredData createObjectFromLine(String line) {
+    public SampleStatistics createObjectFromLine(String line) {
         if (line == null) return null;
 
         String[] sampleLines = line.split("\\t");
@@ -33,9 +33,9 @@ public class StatisticsFactory extends FileStoredDataFactory {
         String[] sampleLines = currentLine.split("\\s+");
         if (sampleLines.length < 8) return null;
 
-        String sampleName = sampleLines[0];
-        String gene = sampleLines[1];
-        String chr = sampleLines[2];
+        String sampleName = sampleLines[0].intern();
+        String gene = sampleLines[1].intern();
+        String chr = sampleLines[2].intern();
         int start = Integer.parseInt(sampleLines[3]);
         int end = Integer.parseInt(sampleLines[4]);
         int len = Integer.parseInt(sampleLines[5]);

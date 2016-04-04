@@ -1,7 +1,9 @@
 package com.astrazeneca.seq2c;
 
 import com.astrazeneca.seq2c.input.FileDataIterator;
+import com.astrazeneca.seq2c.input.FileStoredDataFactory;
 import com.astrazeneca.seq2c.input.Sample;
+import com.astrazeneca.seq2c.input.SampleFactory;
 import org.apache.commons.math3.analysis.function.Log;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
@@ -58,6 +60,8 @@ public class Cov2lr {
 
     private final Map<String, Locus> locusMap;
 
+    private FileStoredDataFactory<Sample> factory;
+
     /**
      * Constructor reads the input files and constructs genes, genes, factor maps
      *
@@ -71,6 +75,7 @@ public class Cov2lr {
         this.covFile = covFile;
         this.tempFile = tmpFile;
         this.locusMap = new HashMap<>();
+        this.factory = new SampleFactory(amplicon);
     }
 
     private void init(boolean amplicon, Map<String, Long> stat) {
@@ -156,7 +161,7 @@ public class Cov2lr {
         try {
             PrintWriter writer = new PrintWriter(tempFile);
             boolean useControlSamples = useControlSamples();
-            FileDataIterator<Sample> iterator = new FileDataIterator(covFile, "sample", amplicon);
+            FileDataIterator<Sample> iterator = new FileDataIterator(covFile, factory);
             while (iterator.hasNext()) {
                 Sample sample = iterator.next();
                 String key = sample.getName();
@@ -252,7 +257,7 @@ public class Cov2lr {
 
     private double readCoverageAndGetMedDepth(Set<String> samp) {
         List<Double> depth = new ArrayList<>();
-        FileDataIterator<Sample> iterator = new FileDataIterator(covFile, "sample", amplicon);
+        FileDataIterator<Sample> iterator = new FileDataIterator(covFile, factory);
         while (iterator.hasNext()) {
             Sample sample = iterator.next();
             double norm1 = Precision.round((sample.getCov() * factor.get(sample.getSample())), 2);
