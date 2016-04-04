@@ -59,8 +59,6 @@ public class Cov2lr {
     private final String tempFile;
 
     private final Map<String, Locus> locusMap;
-    private final FileStoredDataFactory<Sample> factory = new SampleFactory(amplicon);
-
     private FileStoredDataFactory<Sample> factory;
 
     /**
