@@ -44,6 +44,7 @@ public class Seq2c {
 
                 final Map<String, String> sam2bam = Bam2Reads.parseFile(sam2bamFile);
 
+
                 boolean append = false;
                 for (final Map.Entry<String, String> entry : sam2bam.entrySet()) {
                     Seq2cov sec2cov = new Seq2cov(bedFile, entry.getValue(), entry.getKey());
@@ -59,6 +60,7 @@ public class Seq2c {
             }
 
             Map<String, Long> stat = Bam2Reads.printStatsToFile(sam2bamFile);
+            printStat(stat);
 
             Cov2lr cov2lr = new Cov2lr(true, stat, covFile, control, TEMP_FILE);
             cov2lr.doWork();
@@ -70,6 +72,19 @@ public class Seq2c {
 
         } finally {
             Dispatcher.shutdown();
+        }
+    }
+
+    private static void printStat(Map<String, Long> sam2bam) {
+        try {
+            FileWriter writer = new FileWriter("read_stats.txt");
+            for (Map.Entry<String, Long> entry : sam2bam.entrySet()) {
+                writer.write(entry.getKey() + "\t" + entry.getValue() + "\n");
+                writer.flush();
+            }
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

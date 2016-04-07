@@ -99,19 +99,24 @@ public class Cov2lr {
 
         Set<String> sampleNames = new HashSet<>();
         double medDepth = readCoverageAndGetMedDepth(sampleNames);
+        System.err.println("Size is " + geneStatistics.size());
+        System.err.println("medDepth is " + medDepth);
 
         Set<String> badGenes = new HashSet<>();
         List<Double> gooddepth = splitQualitySamples(sampleNames, medDepth, badGenes);
         double medDepthGood = median.evaluate(toDoubleArray(gooddepth));
         gooddepth.clear();
+        System.err.println("Size is " + badGenes.size());
+        System.err.println("medDepth is " + medDepthGood);
 
         Map<String, Double> factor = getFactor2(medDepthGood, badGenes);
 
         Map<String, Double> sampleMedian = getSampleMedian(sampleNames, badGenes);
+        System.err.println("sampleMedian is " + sampleMedian);
 
         double controlSamplesMean = prepareControlSamples(factor);
 
-        setNormalization(medDepth, factor, sampleMedian, controlSamplesMean);
+        setNormalization(medDepth, factor, sampleMedian, controlSamplesMean, badGenes);
 
         this.geneStatistics.clear();
     }
@@ -155,18 +160,23 @@ public class Cov2lr {
         return meanVal;
     }
 
-    private List<Sample> setNormalization(double medDepth, Map<String, Double> factor2, Map<String, Double> sampleMedian, double controlSamplesMean) {
+    private List<Sample> setNormalization(double medDepth, Map<String, Double> factor2, Map<String, Double> sampleMedian, double controlSamplesMean, Set<String> badGenes) {
         List<Sample> sampleResult = new ArrayList<>();
         try {
             PrintWriter writer = new PrintWriter(tempFile);
             boolean useControlSamples = useControlSamples();
             FileDataIterator<Sample> iterator = new FileDataIterator(covFile, factory);
+            int count = 0;
             while (iterator.hasNext()) {
                 Sample sample = iterator.next();
+                if (badGenes.contains(sample.getName())) {
+                    continue;
+                }
                 String key = sample.getName();
                 if (!factor2.containsKey(key)) {
                     continue;
                 }
+                count++;
                 double fact2 = factor2.get(key);
                 double norm1 = geneStatistics.get(key).get(sample.getSample());
                 double smplMed = sampleMedian.get(sample.getSample());
@@ -183,6 +193,7 @@ public class Cov2lr {
             }
             iterator.close();
             writer.close();
+            System.err.println("Size total " + count);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

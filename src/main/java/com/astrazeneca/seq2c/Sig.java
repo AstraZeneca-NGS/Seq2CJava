@@ -1,11 +1,13 @@
 package com.astrazeneca.seq2c;
 
+import org.apache.commons.math3.util.Precision;
+
 public class Sig {
 
     private double sig;
     private String bp;
     private double minp;
-    private double bpi;
+    private int bpi;
     private double siglr;
     private String cn;
     private double mindiff;
@@ -13,7 +15,7 @@ public class Sig {
     private double sigdiff;
     private int total;
 
-    public Sig(double sig, double minp, double bpi, String bp, double siglr, String cn, int total, double mindiff, String sigseg, double sigdiff) {
+    public Sig(double sig, double minp, int bpi, String bp, double siglr, String cn, int total, double mindiff, String sigseg, double sigdiff) {
         this.sig = sig;
         this.minp = minp;
         this.bpi = bpi;
@@ -24,6 +26,10 @@ public class Sig {
         this.sigseg = sigseg;
         this.sigdiff = sigdiff;
         this.total = total;
+    }
+
+    public Sig() {
+        this.sig = -1;
     }
 
     public void addSig(double sig) {
@@ -67,7 +73,7 @@ public class Sig {
     /**
      * @return the bpi
      */
-    public double getBpi() {
+    public int getBpi() {
         return bpi;
     }
 
@@ -75,7 +81,7 @@ public class Sig {
      * @param bpi
      *            the bpi to set
      */
-    public void setBpi(double bpi) {
+    public void setBpi(int bpi) {
         this.bpi = bpi;
     }
 
@@ -186,14 +192,23 @@ public class Sig {
 
     public StringBuilder getName() {
         StringBuilder result = new StringBuilder();
-        result.append(getSig()).append("\t");
+        result.append(Precision.round(getSig(), 3)).append("\t");
         result.append(getBp()).append("\t");
         result.append(getCn()).append("\t");
         result.append(getBpi()).append("\t");
         result.append(getTotal()).append("\t");
-        result.append(getSiglr()).append("\t");
-        result.append(getSigdiff()).append("\t");
+        result.append(Precision.round(getSiglr(), 3)).append("\t");
+        result.append(Precision.round(getSigdiff(), 1)).append("\t");
         result.append(getSigseg());
         return result;
+    }
+
+    public void update(Sig tmpSig) {
+        this.bpi = tmpSig.getBpi();
+        this.bp = tmpSig.getBp();
+        this.siglr = tmpSig.getSiglr();
+        this.cn = tmpSig.getCn();
+        this.total = tmpSig.getTotal();
+        this.sigseg = tmpSig.getSigseg();
     }
 }

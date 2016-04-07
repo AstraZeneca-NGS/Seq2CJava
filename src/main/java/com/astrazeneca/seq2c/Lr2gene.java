@@ -4,6 +4,7 @@ import com.astrazeneca.seq2c.input.*;
 import org.apache.commons.cli.*;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.inference.TTest;
+import org.apache.commons.math3.util.Precision;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -34,11 +35,11 @@ public class Lr2gene {
     private static final java.util.Comparator<double[]> DIS_COMPARATOR = new java.util.Comparator<double[]>() {
         @Override
         public int compare(double[] a, double[] b) {
-            return Double.compare(a[0], b[0]);
+            return Double.compare(b[0], a[0]);
         }
     };
 
-    private Lr2gene() {
+    Lr2gene() {
     }
 
     public Lr2gene(Map<String, Locus> locusMap, String file) {
@@ -84,22 +85,24 @@ public class Lr2gene {
                         sig = new Sig(0.0, 0.0, lr.size(), "Whole", lr_med, "Amp", lr.size(), 0.0, "ALL", lr_med);
                     } else if (lr_med <= DEL) {
                         sig = new Sig(0.0, 0.0, lr.size(), "Whole", lr_med, "Del", lr.size(), 0.0, "ALL", lr_med);
+                    } else {
+                        sig = new Sig(-1, 0, 0, "", 0, "", 0, 0, "", 0);
                     }
                 }
                 Matcher matcher = SLASH_D.matcher(sig.getSigseg());
                 if (!sig.getSigseg().isEmpty() && matcher.find()) {
                     String[] exons = sig.getSigseg().split(",");
-                    long estart = sq2amparr.get(Double.valueOf(exons[0]).intValue() - 1).getStart();
-                    long eend = sq2amparr.get(exons.length - 1).getEnd();
-                    sig.setSigseg(sig.getSigseg() + (estart - eend));
+                    long estart = sq2amparr.get(Integer.valueOf(exons[0]) - 1).getStart();
+                    long eend = sq2amparr.get(Integer.valueOf(exons[exons.length - 1]) - 1).getEnd();
+                    sig.setSigseg(sig.getSigseg() + "(" + estart + "-" + eend + ")");
                 }
                 Locus locus = genes.get(gene);
                 StringBuilder locStr = new StringBuilder();
                 locStr.append(sample).append("\t").append(gene).append("\t").append(locus.getName()).append("\t");
                 if (sig.getSig() != -1) {
-                    locStr.append(lr_med).append("\t").append(sig.getName());
+                    locStr.append(Precision.round(lr_med, 3)).append("\t").append(sig.getName());
                 } else {
-                    locStr.append(lr_med).append("\t\t\t\t\t").append(sig.getTotal());
+                    locStr.append(Precision.round(lr_med, 3)).append("\t\t\t\t\t").append(sig.getTotal());
                 }
 
                 if (j == 0)
@@ -111,14 +114,16 @@ public class Lr2gene {
         iterator.close();
     }
 
-    private Sig checkBP(List<Sample> segs) {
+    Sig checkBP(List<Sample> segs) {
+        if (segs.size() < 4) return null;
+
         double[][] arr = new double[segs.size()][3];
         double[] lr = new double[segs.size()];
         int i = 0;
         for (Sample sqarr : segs) {
             arr[i][0] = sqarr.getStart();
             arr[i][1] = sqarr.getNorm3();
-            arr[i][2] = i;
+            arr[i][2] = i+1;
             i++;
         }
         i = 0;
@@ -132,15 +137,15 @@ public class Lr2gene {
         double[] bps = getBPS(lr);
         double minbp = 1;
         double maxmd = 1;
-        Sig sig = null;
+        Sig sig = new Sig();
         for (double bp : bps) {
 
-            ArrayList<double[]> bm = new ArrayList<>();
-            ArrayList<double[]> up = new ArrayList<>();
-            ArrayList<Double> lrup = new ArrayList<>();
-            ArrayList<Double> lrbm = new ArrayList<>();
-            ArrayList<Integer> upsegArr = new ArrayList<>();
-            ArrayList<Integer> bmsegArr = new ArrayList<>();
+            List<double[]> bm = new ArrayList<>();
+            List<double[]> up = new ArrayList<>();
+            List<Double> lrup = new ArrayList<>();
+            List<Double> lrbm = new ArrayList<>();
+            List<Integer> upsegArr = new ArrayList<>();
+            List<Integer> bmsegArr = new ArrayList<>();
             i = 0;
             for (double[] intarr : arr) {
                 if (intarr[1] > bp) {
@@ -156,43 +161,72 @@ public class Lr2gene {
             }
             double lrupm = StatUtils.percentile(convertDoubles(lrup), 50);
             double lrbmm = StatUtils.percentile(convertDoubles(lrbm), 50);
-            String cn = lrbmm < -0.35 ? "Del" : (lrupm > 0.35 && Math.abs(lrbmm) < Math.abs(lrupm) ? "Amp" : "NA");
+            String cn = Double.compare(lrbmm, -0.35) < 0 ? "Del" : (lrupm > 0.35 && Math.abs(lrbmm) < Math.abs(lrupm) ? "Amp" : "NA");
             if ("NA".equals(cn)) {
                 continue;
             }
             double[] bmiscArr = isConsecutive(bm);
             double[] upiscArr = isConsecutive(up);
             if (bmiscArr[0] != 0) {
-                if (bmiscArr[1] != 1) {
+                if (bmiscArr[1] != -1) {
                     int ti = 0;
                     for (int k = 0; k < up.size(); k++) {
-                        if (up.get(i)[2] == bmiscArr[1])
+                        if (up.get(k)[2] == bmiscArr[1])
                             ti = k;
                     }
-                    bm.add((int) bmiscArr[1], up.get(ti)); // splice
+                    int index = (int)bmiscArr[1];
+                    index = index < 0 ? bm.size() - 1 + index : index;
+                    if (index > bm.size()) {
+                        bm.add(up.get(ti));
+                    } else {
+                        bm.add(index, up.get(ti));
+                    }
                 }
-                sig = getCalls(bm, up);
+                Sig tmpSig = getCalls(bm, up);
                 double[] issig = isSig(bm, up);
-                sig.addSig(issig[0]);
-                sig.addSdiff(issig[1]);
+                if (issig[0] >= 0 && issig[0] < minbp) {
+                    sig.addSig(issig[0]);
+                    sig.addSdiff(issig[1]);
+                    sig.update(tmpSig);
+                    minbp = issig[0];
+                } else if (issig[0] > maxmd) {
+                    sig.addSig(issig[0]);
+                    sig.addSdiff(issig[1]);
+                    sig.update(tmpSig);
+                    maxmd = issig[0];
+                }
 
             } else if (upiscArr[0] != 0) {
-                if (upiscArr[1] != 1) {
+                if (upiscArr[1] != -1) {
                     int ti = 0;
                     for (int k = 0; k < bm.size(); k++) {
-                        if (up.get(i)[2] == upiscArr[1])
+                        if (bm.get(k)[2] == upiscArr[1])
                             ti = k;
                     }
-                    up.add((int) upiscArr[1], bm.get(ti)); // splice
+                    int index = (int) upiscArr[1];
+                    index = index < 0 ? up.size() - 1 + index : index;
+                    if (index >= up.size()) {
+                        up.add(bm.get(ti));
+                    } else {
+                        up.add(index, bm.get(ti));
+                    }
                 }
-                sig = getCalls(up, bm);
+                Sig tmpSig = getCalls(up, bm);
                 double[] issig = isSig(up, bm);
-                sig.addSig(issig[0]);
-                sig.addSdiff(issig[1]);
-
+                if (issig[0] >= 0 && issig[0] < minbp) {
+                    sig.addSig(issig[0]);
+                    sig.addSdiff(issig[1]);
+                    sig.update(tmpSig);
+                    minbp = issig[0];
+                } else if (issig[0] > maxmd) {
+                    sig.addSig(issig[0]);
+                    sig.addSdiff(issig[1]);
+                    sig.update(tmpSig);
+                    maxmd = issig[0];
+                }
             }
         }
-        if (sig == null) {
+        if (sig.getSig() == -1) {
             sig = findBP(lr);
         }
         if (sig.getSig() != 0) {
@@ -203,13 +237,13 @@ public class Lr2gene {
         return sig;
     }
 
-    private double[] isConsecutive(ArrayList<double[]> ref) {
+    private double[] isConsecutive(List<double[]> ref) {
 
         double skip = 0;
         double si = -1;
         double sii = -1;
         double[] result = new double[3];
-        for (int i = 0; i < ref.size(); i++) {
+        for (int i = 1; i < ref.size(); i++) {
             skip += ref.get(i)[2] - ref.get(i - 1)[2] - 1;
             if (ref.get(i)[2] - ref.get(i - 1)[2] == 2) {
                 si = ref.get(i)[2] - 1;
@@ -227,12 +261,16 @@ public class Lr2gene {
     }
 
     private double[] getBPS(double[] lr) {
-        double[][] dis = new double[lr.length][3];
-        for (int i = 0; i < lr.length; i++) {
-            int idx = i == 0 ? lr.length - 1 : i - 1;
-            dis[i][0] = lr[i] - lr[idx];
-            dis[i][1] = lr[i];
-            dis[i][2] = lr[idx];
+        double[] lrSorted = new double[lr.length];
+        System.arraycopy(lr, 0, lrSorted, 0, lr.length);
+        Arrays.sort(lrSorted);
+
+        double[][] dis = new double[lrSorted.length-1][3];
+        for (int i = 1; i < lrSorted.length; i++) {
+            int idx = i == 0 ? lrSorted.length - 1 : i - 1;
+            dis[i-1][0] = lrSorted[i] - lrSorted[i-1];
+            dis[i-1][1] = lrSorted[i];
+            dis[i-1][2] = lrSorted[i-1];
         }
 
         java.util.Arrays.sort(dis, DIS_COMPARATOR);
@@ -253,7 +291,7 @@ public class Lr2gene {
             return sig;
         }
         double minp = 1;
-        double bpi = 0;
+        int bpi = 0;
         double siglr = 0;
         String cn = "NA";
         double mindiff = 0;
@@ -307,7 +345,7 @@ public class Lr2gene {
 
     }
 
-    private Sig getCalls(ArrayList<double[]> bm, ArrayList<double[]> up) {
+    private Sig getCalls(List<double[]> bm, List<double[]> up) {
         double[] tlr1 = new double[bm.size()];
         double[] ti1 = new double[bm.size()];
         double[] tlr2 = new double[up.size()];
@@ -327,27 +365,27 @@ public class Lr2gene {
         i = 0;
         String cn;
         String ti;
-        double segs;
+        int segs;
         double mean;
         double mean1 = StatUtils.mean(tlr1);
         double mean2 = StatUtils.mean(tlr2);
         if (Math.abs(mean1) > Math.abs(mean2)) {
-            cn = mean1 < -0.35 ? "Del" : (mean1 > 0.35 ? "Amp" : "NA");
+            cn = mean1 < -0.35 ? "Del" : (Double.compare(mean1, 0.35) > 0 ? "Amp" : "NA");
             segs = tlr1.length;
             mean = mean1;
             ti = joinDouble(ti1, ",");
         } else {
-            cn = mean2 < -0.35 ? "Del" : (mean2 > 0.35 ? "Amp" : "NA");
+            cn = mean2 < -0.35 ? "Del" : (Double.compare(mean2, 0.35) > 0 ? "Amp" : "NA");
             segs = tlr2.length;
             mean = mean2;
             ti = joinDouble(ti2, ",");
         }
-        Sig sig = new Sig(0.0, 0.0, segs, "", mean, cn, bm.size() + up.size(), 0.0, ti, 0.0);
+        Sig sig = new Sig(0.0, 0.0, segs, "BP", mean, cn, bm.size() + up.size(), 0.0, ti, 0.0);
         return sig;
 
     }
 
-    private double[] isSig(ArrayList<double[]> bm, ArrayList<double[]> up) {
+    private double[] isSig(List<double[]> bm, List<double[]> up) {
         double[] bm_x = new double[bm.size()];
         double[] up_y = new double[up.size()];
         double[] result = new double[2];
@@ -368,7 +406,8 @@ public class Lr2gene {
             double diff = StatUtils.mean(bm_x) - StatUtils.mean(up_y);
             if ((p < PVALUE && Math.abs(diff) >= MINDIFF) || (p < 0.001 && Math.abs(diff) >= MINDIFF && (Math.abs(StatUtils.mean(bm_x)) > 0.8 || Math.abs(StatUtils.mean(up_y)) > 0.8))) {
                 result[0] = p;
-                result[1] = Math.abs(diff);
+                result[1] = Precision.round(Math.abs(diff), 0);
+                return result;
             }
         } else if (bm_x.length >= MINSEGS && up_y.length >= 3) {
             double med = StatUtils.percentile(up_y, 50);
@@ -391,8 +430,9 @@ public class Lr2gene {
             double sum = StatUtils.sum(t);
             double diff = Math.abs(StatUtils.mean(bm_x) - StatUtils.mean(up_y));
             if (Math.abs(sum) > MINMAD && diff > EXONDIFF) {
-                result[0] = Math.abs(mean);
+                result[0] = Precision.round(Math.abs(mean), 0);
                 result[1] = diff;
+                return result;
             }
 
         } else if (up_y.length >= MINSEGS && bm_x.length >= 3) {
@@ -416,14 +456,17 @@ public class Lr2gene {
             double sum = StatUtils.sum(t);
             double diff = Math.abs(StatUtils.mean(bm_x) - StatUtils.mean(up_y));
             if (Math.abs(sum) > MINMAD && diff > EXONDIFF) {
-                result[0] = Math.abs(mean);
+                result[0] = Precision.round(Math.abs(mean), 0);
                 result[1] = diff;
+                return result;
             }
 
         } else {
             result[0] = -1;
             result[1] = 0;
         }
+        result[0] = -1;
+        result[1] = 0;
         return result;
     }
 
@@ -431,7 +474,7 @@ public class Lr2gene {
         int i = 1;
         String result = new String();
         for (double d : doubles) {
-            String r = String.valueOf(d);
+            String r = String.valueOf((int)d);
             if (i < doubles.length) {
                 r += delim;
             }
