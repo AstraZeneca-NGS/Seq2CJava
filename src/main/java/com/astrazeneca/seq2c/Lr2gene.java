@@ -1,9 +1,11 @@
 package com.astrazeneca.seq2c;
 
-import com.astrazeneca.seq2c.input.*;
+import com.astrazeneca.seq2c.input.FileDataIterator;
+import com.astrazeneca.seq2c.input.Sample;
+import com.astrazeneca.seq2c.input.SampleStatistics;
+import com.astrazeneca.seq2c.input.StatisticsFactory;
 import org.apache.commons.cli.*;
 import org.apache.commons.math3.stat.StatUtils;
-import org.apache.commons.math3.stat.inference.TTest;
 import org.apache.commons.math3.util.Precision;
 
 import java.util.*;
@@ -27,6 +29,7 @@ public class Lr2gene {
     private double MINSEGS = 1;
     private boolean useControl;
     private static final Lr2gene DEFAULTS = new Lr2gene();
+    private static final double EPSILON = 1E-6;
 
     private static final Pattern SLASH_D = Pattern.compile("\\d");
 
@@ -50,9 +53,14 @@ public class Lr2gene {
     public void process() {
         int j = 0;
         FileDataIterator<SampleStatistics> iterator = new FileDataIterator(tempFile, new StatisticsFactory());
+        Map<String, Map<String, Sig>> sampleSigs = new HashMap<>();
+        Map<String, Integer> geneSigs = new HashMap<>();
+
         while (iterator.hasNext()) {
             SampleStatistics statistics = iterator.next();
             String sample = statistics.getSample();
+            Map<String, Sig> results = new HashMap<>();
+            sampleSigs.put(sample, results);
             Map<String, List<Sample>> gq = statistics.getGenes();
             for (Map.Entry<String, List<Sample>> entry2 : gq.entrySet()) {
                 String gene = entry2.getKey();
@@ -81,12 +89,12 @@ public class Lr2gene {
                 }
                 Sig sig = checkBP(sq2amparr);
                 if (sig == null || Double.compare(sig.getSig(), -1.0) == 0) {
-                    if (lr_med > AMP) {
+                    if (lr_med >= AMP) {
                         sig = new Sig(0.0, 0.0, lr.size(), "Whole", lr_med, "Amp", lr.size(), 0.0, "ALL", lr_med);
                     } else if (lr_med <= DEL) {
                         sig = new Sig(0.0, 0.0, lr.size(), "Whole", lr_med, "Del", lr.size(), 0.0, "ALL", lr_med);
                     } else {
-                        sig = new Sig(-1, 0, 0, "", 0, "", 0, 0, "", 0);
+                        sig = new Sig(-1, 0, 0, "", 0, "", lr.size(), 0, "", 0);
                     }
                 }
                 Matcher matcher = SLASH_D.matcher(sig.getSigseg());
@@ -96,22 +104,61 @@ public class Lr2gene {
                     long eend = sq2amparr.get(Integer.valueOf(exons[exons.length - 1]) - 1).getEnd();
                     sig.setSigseg(sig.getSigseg() + "(" + estart + "-" + eend + ")");
                 }
-                Locus locus = genes.get(gene);
-                StringBuilder locStr = new StringBuilder();
-                locStr.append(sample).append("\t").append(gene).append("\t").append(locus.getName()).append("\t");
-                if (sig.getSig() != -1) {
-                    locStr.append(Precision.round(lr_med, 3)).append("\t").append(sig.getName());
-                } else {
-                    locStr.append(Precision.round(lr_med, 3)).append("\t\t\t\t\t").append(sig.getTotal());
-                }
 
-                if (j == 0)
-                    System.out.println("Sample\tGene\tChr\tStart\tEnd\tLength\tLog2ratio\tSig\tBP_Whole\tAmp_Del\tAb_Seg\tTotal_Seg\tAb_log2ratio\tLog2r_Diff\tAb_Seg_Loc\tAb_Samples\tAb_Samples_Pcnt");
-                j++;
-                System.out.println(locStr);
+                sig.setLrMed(lr_med);
+
+                if (sig.getBp().equals("BP")) {
+                    String key = (gene + " " + sig.getSigseg()).intern();
+                    if (geneSigs.containsKey(key)) {
+                        geneSigs.put(key, geneSigs.get(key) + 1);
+                    } else {
+                        geneSigs.put(key, 1);
+                    }
+                }
+                results.put(gene, sig);
             }
         }
         iterator.close();
+        printResults(sampleSigs, geneSigs);
+    }
+
+    private void printResults(Map<String, Map<String, Sig>> sampleSigs, Map<String, Integer> geneSigs) {
+        int j = 0;
+        for (Map.Entry<String, Map<String, Sig>> entry : sampleSigs.entrySet()) {
+            String sample = entry.getKey();
+            int samplesNumber = sampleSigs.size();
+            for (Map.Entry<String, Sig> sigs : entry.getValue().entrySet()) {
+                String gene = sigs.getKey();
+                Sig sig = sigs.getValue();
+                Locus locus = genes.get(gene);
+                StringBuilder locStr = new StringBuilder();
+
+                locStr.append(sample).append("\t").append(gene).append("\t").append(locus.getName()).append("\t").append(Precision.round(sig.getLrMed(), 3)).append("\t");
+                if (sig.getSig() != -1) {
+                    double bpPercent = 0.0;
+                    int bpNumber = 0;
+                    if (sig.getBp().equals("BP")) {
+                        String key = (gene + " " + sig.getSigseg()).intern();
+                        bpNumber = geneSigs.get(key);
+                        bpPercent = Precision.round(bpNumber/(double)samplesNumber, 3);
+                    }
+                    if (Double.compare(bpPercent, 0.0) != 0 && Double.compare(bpPercent, MAXRATE) > 0
+                            && bpNumber > MAXCNT) {
+                        locStr.append("\t\t\t\t\t").append(sig.getTotal());
+                    } else {
+                        locStr.append(sig.getName().append("\t").append(bpNumber).append("\t").append(bpPercent));
+                    }
+                } else {
+                    locStr.append("\t\t\t\t").append(sig.getTotal());
+                }
+                if (j == 0)
+                    System.out.println("Sample\tGene\tChr\tStart\tEnd\tLength\tLog2ratio\tSig\tBP_Whole\tAmp_Del\tAb_Seg\tTotal_Seg\tAb_log2ratio\tLog2r_Diff\tAb_Seg_Loc\tAb_Samples\tAb_Samples_Pcnt");
+                j++;
+
+
+                System.out.println(locStr);
+            }
+        }
     }
 
     Sig checkBP(List<Sample> segs) {
@@ -122,7 +169,7 @@ public class Lr2gene {
         int i = 0;
         for (Sample sqarr : segs) {
             arr[i][0] = sqarr.getStart();
-            arr[i][1] = sqarr.getNorm3();
+            arr[i][1] = useControl ? sqarr.getNorm3s() : sqarr.getNorm3();
             arr[i][2] = i+1;
             i++;
         }
@@ -131,13 +178,13 @@ public class Lr2gene {
             lr[i] = l[1];
             i++;
         }
-        double max = StatUtils.max(lr);
-        double min = StatUtils.min(lr);
-        double mid = (max + min) / 2;
+
         double[] bps = getBPS(lr);
         double minbp = 1;
         double maxmd = 1;
         Sig sig = new Sig();
+        Sig sigbp = new Sig();
+        Sig sigmd = new Sig();
         for (double bp : bps) {
 
             List<double[]> bm = new ArrayList<>();
@@ -177,22 +224,22 @@ public class Lr2gene {
                     int index = (int)bmiscArr[1];
                     index = index < 0 ? bm.size() - 1 + index : index;
                     if (index > bm.size()) {
-                        bm.add(up.get(ti));
+                        bm.add(up.remove(ti));
                     } else {
-                        bm.add(index, up.get(ti));
+                        bm.add(index, up.remove(ti));
                     }
                 }
                 Sig tmpSig = getCalls(bm, up);
                 double[] issig = isSig(bm, up);
                 if (issig[0] >= 0 && issig[0] < minbp) {
-                    sig.addSig(issig[0]);
-                    sig.addSdiff(issig[1]);
-                    sig.update(tmpSig);
+                    sigbp.addSig(issig[0]);
+                    sigbp.addSdiff(issig[1]);
+                    sigbp.update(tmpSig);
                     minbp = issig[0];
                 } else if (issig[0] > maxmd) {
-                    sig.addSig(issig[0]);
-                    sig.addSdiff(issig[1]);
-                    sig.update(tmpSig);
+                    sigmd.addSig(issig[0]);
+                    sigmd.addSdiff(issig[1]);
+                    sigmd.update(tmpSig);
                     maxmd = issig[0];
                 }
 
@@ -206,32 +253,38 @@ public class Lr2gene {
                     int index = (int) upiscArr[1];
                     index = index < 0 ? up.size() - 1 + index : index;
                     if (index >= up.size()) {
-                        up.add(bm.get(ti));
+                        up.add(bm.remove(ti));
                     } else {
-                        up.add(index, bm.get(ti));
+                        up.add(index, bm.remove(ti));
                     }
                 }
                 Sig tmpSig = getCalls(up, bm);
                 double[] issig = isSig(up, bm);
                 if (issig[0] >= 0 && issig[0] < minbp) {
-                    sig.addSig(issig[0]);
-                    sig.addSdiff(issig[1]);
-                    sig.update(tmpSig);
+                    sigbp.addSig(issig[0]);
+                    sigbp.addSdiff(issig[1]);
+                    sigbp.update(tmpSig);
                     minbp = issig[0];
                 } else if (issig[0] > maxmd) {
-                    sig.addSig(issig[0]);
-                    sig.addSdiff(issig[1]);
-                    sig.update(tmpSig);
+                    sigmd.addSig(issig[0]);
+                    sigmd.addSdiff(issig[1]);
+                    sigmd.update(tmpSig);
                     maxmd = issig[0];
                 }
             }
         }
+        if (sigbp.getSig() != -1) {
+            return sigbp;
+        }
+        if (sigmd.getSig() != -1) {
+            return sigmd;
+        }
         if (sig.getSig() == -1) {
             sig = findBP(lr);
         }
-        if (sig.getSig() != 0) {
-            sig.setBp("BP");
 
+        if (sig.getSig() != -1) {
+            sig.setBp("BP");
         }
         sig.setTotal(arr.length);
         return sig;
@@ -250,7 +303,7 @@ public class Lr2gene {
                 sii = i;
             }
         }
-        if ((skip == 0) || (skip == 1 && ref.size() > 10)) {
+        if ((skip == 0) || (skip == 1 && ref.size() >= 10)) {
             result[0] = 1;
         } else {
             result[0] = 0;
@@ -267,8 +320,7 @@ public class Lr2gene {
 
         double[][] dis = new double[lrSorted.length-1][3];
         for (int i = 1; i < lrSorted.length; i++) {
-            int idx = i == 0 ? lrSorted.length - 1 : i - 1;
-            dis[i-1][0] = lrSorted[i] - lrSorted[i-1];
+            dis[i-1][0] = Precision.round(lrSorted[i] - lrSorted[i-1], 2);
             dis[i-1][1] = lrSorted[i];
             dis[i-1][2] = lrSorted[i-1];
         }
@@ -277,7 +329,7 @@ public class Lr2gene {
 
         ArrayList<Double> bpsArr = new ArrayList<>(dis.length);
         for (double[] bp : dis) {
-            if (bp[0] < 0.1)
+            if (Precision.compareTo(bp[0], 0.1, EPSILON) < 0)
                 break;
             bpsArr.add((bp[1] + bp[2]) / 2);
 
@@ -296,25 +348,28 @@ public class Lr2gene {
         String cn = "NA";
         double mindiff = 0;
         String sigseg = "";
-        double[] lr_x = new double[lr.length - (int) MINBPEXONS];
-        double[] lr_y = new double[lr.length];
+
         for (int i = (int) MINBPEXONS; i < lr.length - (int) MINBPEXONS; i++) {
-            for (int k = 0; k <= (i - 1); k++) {
+            double[] lr_x = new double[i];
+            double[] lr_y = new double[lr.length - i];
+
+            for (int k = 0; k < i; k++) {
                 lr_x[k] = lr[k];
             }
-            for (int k = 0; k <= (lr.length - 1); k++) {
-                lr_y[k] = lr[k];
+            Arrays.sort(lr_x);
+            for (int k = i; k < lr.length; k++) {
+                lr_y[k-i] = lr[k];
             }
+            Arrays.sort(lr_y);
 
             double bpleft = StatUtils.mean(lr_x);
             double bpright = StatUtils.mean(lr_y);
             if ((bpleft > bpright && lr_x[1] < lr_y[lr_y.length - 1]) || (bpleft < bpright && lr_y[1] < lr_x[lr_x.length - 1])) {
                 continue;
             }
-            TTest ttest = new TTest();
-            double p = ttest.tTest(lr_x, lr_y);
+            double p = TTestStatistics.getT(lr_x, lr_y);
             double[] sigseg1 = new double[i];
-            double[] sigseg2 = new double[lr.length - i + 1];
+            double[] sigseg2 = new double[lr.length - i];
             int j = 0;
             for (int k = 1; k <= i; k++) {
                 sigseg1[j] = k;
@@ -337,7 +392,7 @@ public class Lr2gene {
         }
         Sig sig;
         if (minp < 1) {
-            sig = new Sig(0, minp, bpi, "", siglr, cn, 0, mindiff, sigseg, 0);
+            sig = new Sig(minp, minp, bpi, "", siglr, cn, 0, mindiff, sigseg, mindiff);
         } else {
             sig = new Sig(-1.0, 0, 0, "", 0, "", 0, 0, "", 0);
         }
@@ -386,6 +441,7 @@ public class Lr2gene {
     }
 
     private double[] isSig(List<double[]> bm, List<double[]> up) {
+
         double[] bm_x = new double[bm.size()];
         double[] up_y = new double[up.size()];
         double[] result = new double[2];
@@ -399,14 +455,13 @@ public class Lr2gene {
             up_y[i] = u[1];
             i++;
         }
-        i = 0;
+
         if (bm_x.length >= 3 && up_y.length >= 3) {
-            TTest ttest = new TTest();
-            double p = ttest.tTest(bm_x, up_y);
+            double p = TTestStatistics.getT(bm_x, up_y);
             double diff = StatUtils.mean(bm_x) - StatUtils.mean(up_y);
             if ((p < PVALUE && Math.abs(diff) >= MINDIFF) || (p < 0.001 && Math.abs(diff) >= MINDIFF && (Math.abs(StatUtils.mean(bm_x)) > 0.8 || Math.abs(StatUtils.mean(up_y)) > 0.8))) {
                 result[0] = p;
-                result[1] = Precision.round(Math.abs(diff), 0);
+                result[1] = Precision.round(Math.abs(diff), 3);
                 return result;
             }
         } else if (bm_x.length >= MINSEGS && up_y.length >= 3) {
@@ -429,14 +484,16 @@ public class Lr2gene {
             double mean = StatUtils.mean(t);
             double sum = StatUtils.sum(t);
             double diff = Math.abs(StatUtils.mean(bm_x) - StatUtils.mean(up_y));
-            if (Math.abs(sum) > MINMAD && diff > EXONDIFF) {
-                result[0] = Precision.round(Math.abs(mean), 0);
+            if (Precision.compareTo(Math.abs(sum), MINMAD, EPSILON) > 0 && Precision.compareTo(diff, EXONDIFF, EPSILON) > 0) {
+                result[0] = Math.abs(mean);
                 result[1] = diff;
                 return result;
             }
 
         } else if (up_y.length >= MINSEGS && bm_x.length >= 3) {
-            double med = StatUtils.percentile(up_y, 50);
+
+            double med = StatUtils.percentile(bm_x, 50);
+
             double[] d = new double[bm_x.length];
             i = 0;
             for (double m : bm_x) {
@@ -455,8 +512,8 @@ public class Lr2gene {
             double mean = StatUtils.mean(t);
             double sum = StatUtils.sum(t);
             double diff = Math.abs(StatUtils.mean(bm_x) - StatUtils.mean(up_y));
-            if (Math.abs(sum) > MINMAD && diff > EXONDIFF) {
-                result[0] = Precision.round(Math.abs(mean), 0);
+            if (Precision.compareTo(Math.abs(sum), MINMAD, EPSILON) > 0 && Precision.compareTo(diff, EXONDIFF, EPSILON) > 0) {
+                result[0] = Math.abs(mean);
                 result[1] = diff;
                 return result;
             }

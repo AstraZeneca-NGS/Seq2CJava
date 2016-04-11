@@ -18,10 +18,8 @@ dependencies {
     compile('org.apache.commons:commons-math3:3.5') {
         transitive = false
     }
-
+    testCompile 'junit:junit:4.12'
 }
-
-//applicationDefaultJvmArgs = ["-Xrunhprof:cpu=samples,depth=10,lineno=y", "-Xmx1g", "-Dsamjdk.buffer_size=524288"]
 
 applicationDefaultJvmArgs = ["-Xms128m", "-Xmx1g", "-Dsamjdk.buffer_size=262144"]
 

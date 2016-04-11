@@ -1,6 +1,9 @@
 package com.astrazeneca.seq2c;
 
+import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
+
+import java.util.Formatter;
 
 public class Sig {
 
@@ -14,6 +17,7 @@ public class Sig {
     private String sigseg;
     private double sigdiff;
     private int total;
+    private double lrMed;
 
     public Sig(double sig, double minp, int bpi, String bp, double siglr, String cn, int total, double mindiff, String sigseg, double sigdiff) {
         this.sig = sig;
@@ -182,6 +186,29 @@ public class Sig {
         return sig;
     }
 
+    public String getSigStr() {
+        StringBuilder result = new StringBuilder();
+        Formatter formatter = new Formatter(result);
+        formatter.format(getFormat(), roundSig());
+        return result.toString();
+    }
+
+    private double roundSig() {
+        if (sig >= 1) {
+            return sig - 0.00001;
+        } else {
+            return sig;
+        }
+    }
+
+    public String getFormat() {
+        if (FastMath.abs(sig) < 0.001) {
+            return "%.3g";
+        } else {
+            return "%.2g";
+        }
+    }
+
     /**
      * @param sig
      *            the sig to set
@@ -192,7 +219,7 @@ public class Sig {
 
     public StringBuilder getName() {
         StringBuilder result = new StringBuilder();
-        result.append(Precision.round(getSig(), 3)).append("\t");
+        result.append(getSigStr()).append("\t");
         result.append(getBp()).append("\t");
         result.append(getCn()).append("\t");
         result.append(getBpi()).append("\t");
@@ -210,5 +237,13 @@ public class Sig {
         this.cn = tmpSig.getCn();
         this.total = tmpSig.getTotal();
         this.sigseg = tmpSig.getSigseg();
+    }
+
+    public double getLrMed() {
+        return lrMed;
+    }
+
+    public void setLrMed(double lrMed) {
+        this.lrMed = lrMed;
     }
 }

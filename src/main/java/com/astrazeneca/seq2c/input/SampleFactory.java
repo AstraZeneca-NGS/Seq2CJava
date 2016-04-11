@@ -23,7 +23,7 @@ public class SampleFactory extends FileStoredDataFactory<Sample> {
         int len = Integer.parseInt(sampleLines[6]);
         double depth = Double.parseDouble(sampleLines[7]);
 
-        String key = amplicon ? join(" ", gene, chr, Long.toString(start), Long.toString(end), Long.toString(len)) : gene;
+        String key = amplicon ? join(" ", gene, chr, Long.toString(start), Long.toString(end), Long.toString(len)).intern() : gene;
         return new Sample(key, sampleName, chr, start, end, gene, len, depth);
     }
 
