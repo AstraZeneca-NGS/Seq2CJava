@@ -237,119 +237,35 @@ public class Lr2geneTest {
         String chr = "16";
 
         List<Sample> samples = new ArrayList<>();
-        Sample sample;
-        sample = new Sample(sampleName, sampleName, chr, 71963329, 71963668, gene, 670, 19.33);
-        sample.setNorm3(-6.32);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71963802, 71964197, gene, 670, 19.33);
-        sample.setNorm3(-4.88);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71967163, 71967526, gene, 670, 19.33);
-        sample.setNorm3(-5.49);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71967724, 71968138, gene, 670, 19.33);
-        sample.setNorm3(-9.06);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71969130, 71969520, gene, 670, 19.33);
-        sample.setNorm3(-9.06);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71971064, 71971437, gene, 670, 19.33);
-        sample.setNorm3(-7.16);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71976293, 71977077, gene, 670, 19.33);
-        sample.setNorm3(-7.58);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71977823, 71978210, gene, 670, 19.33);
-        sample.setNorm3(-7.97);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71981245, 71981651, gene, 670, 19.33);
-        sample.setNorm3(-7.42);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71983527, 71984300, gene, 670, 19.33);
-        sample.setNorm3(-7.58);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71985381, 71985753, gene, 670, 19.33);
-        sample.setNorm3(-6.43);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71986683, 71987097, gene, 670, 19.33);
-        sample.setNorm3(-6.84);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71987892, 71988309, gene, 670, 19.33);
-        sample.setNorm3(-7.94);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 71996980, 71997383, gene, 670, 19.33);
-        sample.setNorm3(-5.54);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72000908, 72001346, gene, 670, 19.33);
-        sample.setNorm3(-5.49);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72001644, 72001966, gene, 670, 19.33);
-        sample.setNorm3(-9.06);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72003668, 72004123, gene, 670, 19.33);
-        sample.setNorm3(-7.43);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72007098, 72007544, gene, 670, 19.33);
-        sample.setNorm3(-7.09);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72011016, 72011481, gene, 670, 19.33);
-        sample.setNorm3(-8.65);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72012050, 72012408, gene, 670, 19.33);
-        sample.setNorm3(-7.41);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72013529, 72014157, gene, 670, 19.33);
-        sample.setNorm3(-7.40);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72015849, 72016218, gene, 670, 19.33);
-        sample.setNorm3(-5.45);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72017799, 72018180, gene, 670, 19.33);
-        sample.setNorm3(-4.15);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72019997, 72020448, gene, 670, 19.33);
-        sample.setNorm3(-7.91);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72024033, 72024335, gene, 670, 19.33);
-        sample.setNorm3(-5.08);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72026993, 72027378, gene, 670, 19.33);
-        sample.setNorm3(-7.21);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72032010, 72032402, gene, 670, 19.33);
-        sample.setNorm3(-6.96);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 72033468, 72033951, gene, 670, 19.33);
-        sample.setNorm3(-9.06);
-        samples.add(sample);
-
+        SamplesTestFactory factory = new SamplesTestFactory(sampleName, gene, chr);
+        samples.add(factory.getSample(71963329, 71963668, -6.32));
+        samples.add(factory.getSample(71963802, 71964197, -4.88));
+        samples.add(factory.getSample(71967163, 71967526, -5.49));
+        samples.add(factory.getSample(71967724, 71968138, -9.06));
+        samples.add(factory.getSample(71969130, 71969520, -9.06));
+        samples.add(factory.getSample(71971064, 71971437, -7.16));
+        samples.add(factory.getSample(71976293, 71977077, -7.58));
+        samples.add(factory.getSample(71977823, 71978210, -7.97));
+        samples.add(factory.getSample(71981245, 71981651, -7.42));
+        samples.add(factory.getSample(71983527, 71984300, -7.58));
+        samples.add(factory.getSample(71985381, 71985753, -6.43));
+        samples.add(factory.getSample(71986683, 71987097, -6.84));
+        samples.add(factory.getSample(71987892, 71988309, -7.94));
+        samples.add(factory.getSample(71996980, 71997383, -5.54));
+        samples.add(factory.getSample(72000908, 72001346, -5.49));
+        samples.add(factory.getSample(72001644, 72001966, -9.06));
+        samples.add(factory.getSample(72003668, 72004123, -7.43));
+        samples.add(factory.getSample(72007098, 72007544, -7.09));
+        samples.add(factory.getSample(72011016, 72011481, -8.65));
+        samples.add(factory.getSample(72012050, 72012408, -7.41));
+        samples.add(factory.getSample(72013529, 72014157, -7.40));
+        samples.add(factory.getSample(72015849, 72016218, -5.45));
+        samples.add(factory.getSample(72017799, 72018180, -4.15));
+        samples.add(factory.getSample(72019997, 72020448, -7.91));
+        samples.add(factory.getSample(72024033, 72024335, -5.08));
+        samples.add(factory.getSample(72026993, 72027378, -7.21));
+        samples.add(factory.getSample(72032010, 72032402, -6.96));
+        samples.add(factory.getSample(72033468, 72033951, -9.06));
         return samples;
     }
 
@@ -359,87 +275,37 @@ public class Lr2geneTest {
         String gene = "PKN2";
         String chr = "1";
         List<Sample> samples = new ArrayList<>();
-        Sample sample = new Sample(sampleName, sampleName, chr, 89149744, 89150413, gene, 670, 19.33);
-        sample.setNorm3(-2.15);
-        samples.add(sample);
+        SamplesTestFactory factory = new SamplesTestFactory(sampleName, gene, chr);
 
-        sample = new Sample(sampleName, sampleName, chr, 89206525, 89207087, gene, 563, 19.33);
-        sample.setNorm3(0.43);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89225761, 89226129, gene, 369, 19.33);
-        sample.setNorm3(0.40);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89235912, 89236276, gene, 365, 19.33);
-        sample.setNorm3(-0.07);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89237023, 89237636, gene, 614, 19.33);
-        sample.setNorm3(-0.35);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89250208, 89250579, gene, 372, 19.33);
-        sample.setNorm3(0.36);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89251641, 89252008, gene, 368, 19.33);
-        sample.setNorm3(0.15);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89270011, 89272037, gene, 368, 19.33);
-        sample.setNorm3(-0.42);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89272852, 89273566, gene, 715, 19.33);
-        sample.setNorm3(0.01);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89279185, 89279534, gene, 350, 19.33);
-        sample.setNorm3(1.05);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89287463, 89287813, gene, 351, 19.33);
-        sample.setNorm3(0.08);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89289842, 89290216, gene, 375, 19.33);
-        sample.setNorm3(-0.09);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89294053, 89294415, gene, 363, 19.33);
-        sample.setNorm3(0.91);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89294531, 89294900, gene, 370, 19.33);
-        sample.setNorm3(-1.24);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 89298286, 89301988, gene, 3703, 19.33);
-        sample.setNorm3(1.36);
-        samples.add(sample);
+        samples.add(factory.getSample(89149744, 89150413, -2.15));
+        samples.add(factory.getSample(89206525, 89207087, 0.43));
+        samples.add(factory.getSample(89225761, 89226129, 0.40));
+        samples.add(factory.getSample(89235912, 89236276, -0.07));
+        samples.add(factory.getSample(89237023, 89237636, -0.35));
+        samples.add(factory.getSample(89250208, 89250579, 0.36));
+        samples.add(factory.getSample(89251641, 89252008, 0.15));
+        samples.add(factory.getSample(89270011, 89272037, -0.42));
+        samples.add(factory.getSample(89272852, 89273566, 0.01));
+        samples.add(factory.getSample(89279185, 89279534, 1.05));
+        samples.add(factory.getSample(89287463, 89287813, 0.08));
+        samples.add(factory.getSample(89289842, 89290216, -0.09));
+        samples.add(factory.getSample(89294053, 89294415, 0.91));
+        samples.add(factory.getSample(89294531, 89294900, -1.24));
+        samples.add(factory.getSample(89298286, 89301988, 1.36));
         return samples;
     }
 
     private List<Sample> getSampleCOMMD1() {
         String sampleName = "HG00097.mapped.ILLUMINA.bwa.GBR.exome.20130415";
         String gene = "COMMD1";
+        String chr = "1";
         List<Sample> samples = new ArrayList<>();
-        Sample sample = new Sample("sampleName", "sampleName", "2", 62132652, 62133086, gene, 435, 19.33);
-        sample.setNorm3(-0.03);
-        samples.add(sample);
+        SamplesTestFactory factory = new SamplesTestFactory(sampleName, gene, chr);
 
-        Sample sample1 = new Sample("sampleName", "sampleName", "2", 62227686, 62228277, gene, 435, 19.33);
-        sample1.setNorm3(-0.45);
-        samples.add(sample1);
-
-        Sample sample2 = new Sample("sampleName", "sampleName", "2", 62362822, 62363432, gene, 435, 19.33);
-        sample2.setNorm3(-0.77);
-        samples.add(sample2);
-
-        Sample sample3 = new Sample("sampleName", "sampleName", "2", 62373383, 62374550, gene, 435, 19.33);
-        sample3.setNorm3(-4.23);
-        samples.add(sample3);
+        samples.add(factory.getSample(62132652, 62133086, -0.03));
+        samples.add(factory.getSample(62227686, 62228277, -0.45));
+        samples.add(factory.getSample(62362822, 62363432, -0.77));
+        samples.add(factory.getSample(62373383, 62374550, -4.23));
         return samples;
     }
 
@@ -447,109 +313,45 @@ public class Lr2geneTest {
         String sampleName = "HG00096";
         String gene = "not_a_gene_4998";
         String chr = "17";
-
+        SamplesTestFactory factory = new SamplesTestFactory(sampleName, gene, chr);
         List<Sample> samples = new ArrayList<>();
-        Sample sample;
-        sample = new Sample(sampleName, sampleName, chr, 28935361, 28935661, gene, 670, 19.33);
-        sample.setNorm3(1.54);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 28937857, 28938010, gene, 670, 19.33);
-        sample.setNorm3(1.84);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 28942831, 28943091, gene, 670, 19.33);
-        sample.setNorm3(1.03);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 28944673, 28944947, gene, 670, 19.33);
-        sample.setNorm3(1.58);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 28951587, 28951908, gene, 670, 19.33);
-        sample.setNorm3(-0.19);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 28951969, 28952605, gene, 670, 19.33);
-        sample.setNorm3(0.47);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 28956535, 28956895, gene, 670, 19.33);
-        sample.setNorm3(1.72);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 28958625, 28958625, gene, 670, 19.33);
-        sample.setNorm3(1.64);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 28959984, 28960491, gene, 670, 19.33);
-        sample.setNorm3(-0.78);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 28960885, 28964534, gene, 670, 19.33);
-        sample.setNorm3(-1.13);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 28998930, 28999243, gene, 670, 19.33);
-        sample.setNorm3(-0.13);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 29058674, 29059244, gene, 670, 19.33);
-        sample.setNorm3(-5.12);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 29061781, 29062209, gene, 670, 19.33);
-        sample.setNorm3(-1.40);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 29070195, 29070503, gene, 670, 19.33);
-        sample.setNorm3(-1.76);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 29086382, 29086666, gene, 670, 19.33);
-        sample.setNorm3(-1.29);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 29093456, 29093709, gene, 670, 19.33);
-        sample.setNorm3(-0.91);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 29095756, 29096186, gene, 670, 19.33);
-        sample.setNorm3(-0.19);
-        samples.add(sample);
+        samples.add(factory.getSample(28935361, 28935661, 1.54));
+        samples.add(factory.getSample(28937857, 28938010, 1.84));
+        samples.add(factory.getSample(28942831, 28943091, 1.03));
+        samples.add(factory.getSample(28944673, 28944947, 1.58));
+        samples.add(factory.getSample(28951587, 28951908, -0.19));
+        samples.add(factory.getSample(28951969, 28952605, 0.47));
+        samples.add(factory.getSample(28956535, 28956895, 1.72));
+        samples.add(factory.getSample(28958625, 28958625, 1.64));
+        samples.add(factory.getSample(28959984, 28960491, -0.78));
+        samples.add(factory.getSample(28960885, 28964534, -1.13));
+        samples.add(factory.getSample(28998930, 28999243, -0.13));
+        samples.add(factory.getSample(29058674, 29059244, -5.12));
+        samples.add(factory.getSample(29061781, 29062209, -1.40));
+        samples.add(factory.getSample(29070195, 29070503, -1.76));
+        samples.add(factory.getSample(29086382, 29086666, -1.29));
+        samples.add(factory.getSample(29093456, 29093709, -0.91));
+        samples.add(factory.getSample(29095756, 29096186, -0.19));
         return samples;
     }
 
-    public List<Sample> getSampleNotAGene6082() {
+    private List<Sample> getSampleNotAGene6082() {
         String sampleName = "HG000100";
         String gene = "not_a_gene_6082";
         String chr = "X";
+        SamplesTestFactory factory = new SamplesTestFactory(sampleName, gene, chr);
         List<Sample> samples = new ArrayList<>();
 
-        Sample sample = new Sample(sampleName, sampleName, chr, 101033151, 101033783, gene, 670, 19.33);
-        sample.setNorm3(0.99);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 101033802, 101034165, gene, 670, 19.33);
-        sample.setNorm3(-0.90);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 101034176, 101034562, gene, 670, 19.33);
-        sample.setNorm3(-0.87);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 101034577, 101034935, gene, 670, 19.33);
-        sample.setNorm3(-0.50);
-        samples.add(sample);
-
-        sample = new Sample(sampleName, sampleName, chr, 101034957, 101035657, gene, 670, 19.33);
-        sample.setNorm3(0.00);
-        samples.add(sample);
+        samples.add(factory.getSample(101033151, 101033783, 0.99));
+        samples.add(factory.getSample(101033802, 101034165, -0.90));
+        samples.add(factory.getSample(101034176, 101034562, -0.87));
+        samples.add(factory.getSample(101034577, 101034935, -0.50));
+        samples.add(factory.getSample(101034957, 101035657, 0.00));
 
         return samples;
     }
 
-    public List<Sample> getSampleAACS() {
+    private List<Sample> getSampleAACS() {
         String sampleName = "HG00096";
         String gene = "AACS";
         String chr = "12";
@@ -578,7 +380,7 @@ public class Lr2geneTest {
         return samples;
     }
 
-    public List<Sample> getSampleAASDHPPT() {
+    private List<Sample> getSampleAASDHPPT() {
         String sampleName = "HG00096";
         String gene = "AASDHPPT";
         String chr = "11";
@@ -594,7 +396,7 @@ public class Lr2geneTest {
         return samples;
     }
 
-    public List<Sample> getSampleACOX1() {
+    private List<Sample> getSampleACOX1() {
         String sampleName = "HG00096";
         String gene = "ACOX1";
         String chr = "17";
@@ -617,7 +419,7 @@ public class Lr2geneTest {
         return samples;
     }
 
-    public List<Sample> getSampleALDH9A1() {
+    private List<Sample> getSampleALDH9A1() {
         String sampleName = "HG00096";
         String gene = "ALDH9A1";
         String chr = "1";
@@ -639,7 +441,7 @@ public class Lr2geneTest {
         return samples;
     }
 
-    public List<Sample> getSampleANKRD44() {
+    private List<Sample> getSampleANKRD44() {
         String sampleName = "HG00096";
         String gene = "ANKRD44";
         String chr = "2";
@@ -685,7 +487,7 @@ public class Lr2geneTest {
         return samples;
     }
 
-    public List<Sample> getSampleCASC4() {
+    private List<Sample> getSampleCASC4() {
         String sampleName = "HG00096";
         String gene = "CASC4";
         String chr = "15";
@@ -707,7 +509,7 @@ public class Lr2geneTest {
         return samples;
     }
 
-    public List<Sample> getSampleAPEH() {
+    private List<Sample> getSampleAPEH() {
         String sampleName = "HG00096";
         String gene = "APEH";
         String chr = "3";
@@ -722,7 +524,7 @@ public class Lr2geneTest {
         return samples;
     }
 
-    public List<Sample> getSampleCPSF4L() {
+    private List<Sample> getSampleCPSF4L() {
         String sampleName = "HG00096";
         String gene = "CPSF4L";
         String chr = "17";
@@ -740,7 +542,7 @@ public class Lr2geneTest {
         return samples;
     }
 
-    public List<Sample> getSampleSLC38A11() {
+    private List<Sample> getSampleSLC38A11() {
         String sampleName = "HG00099";
         String gene = "SLC38A11";
         String chr = "2";
@@ -765,7 +567,7 @@ public class Lr2geneTest {
         return samples;
     }
 
-    public List<Sample> getSampleFIG4() {
+    private List<Sample> getSampleFIG4() {
         String sampleName = "HG000100";
         String gene = "FIG4";
         String chr = "6";
