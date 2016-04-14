@@ -29,7 +29,7 @@ public class Lr2gene {
     private double MINSEGS = 1;
     private boolean useControl;
     private static final Lr2gene DEFAULTS = new Lr2gene();
-    private static final double EPSILON = 1E-6;
+    private static final double EPSILON = 1E-8;
 
     private static final Pattern SLASH_D = Pattern.compile("\\d");
 
@@ -320,13 +320,12 @@ public class Lr2gene {
 
         double[][] dis = new double[lrSorted.length-1][3];
         for (int i = 1; i < lrSorted.length; i++) {
-            dis[i-1][0] = Precision.round(lrSorted[i] - lrSorted[i-1], 2);
+            dis[i-1][0] = lrSorted[i] - lrSorted[i-1];
             dis[i-1][1] = lrSorted[i];
             dis[i-1][2] = lrSorted[i-1];
         }
 
         java.util.Arrays.sort(dis, DIS_COMPARATOR);
-
         ArrayList<Double> bpsArr = new ArrayList<>(dis.length);
         for (double[] bp : dis) {
             if (Precision.compareTo(bp[0], 0.1, EPSILON) < 0)

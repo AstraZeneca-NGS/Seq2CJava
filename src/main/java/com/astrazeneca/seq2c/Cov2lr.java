@@ -99,20 +99,14 @@ public class Cov2lr {
 
         Set<String> sampleNames = new HashSet<>();
         double medDepth = readCoverageAndGetMedDepth(sampleNames);
-        System.err.println("Size is " + geneStatistics.size());
-        System.err.println("medDepth is " + medDepth);
 
         Set<String> badGenes = new HashSet<>();
         List<Double> gooddepth = splitQualitySamples(sampleNames, medDepth, badGenes);
         double medDepthGood = median.evaluate(toDoubleArray(gooddepth));
-        gooddepth.clear();
-        System.err.println("Size is " + badGenes.size());
-        System.err.println("medDepth is " + medDepthGood);
 
         Map<String, Double> factor = getFactor2(medDepthGood, badGenes);
 
         Map<String, Double> sampleMedian = getSampleMedian(sampleNames, badGenes);
-        System.err.println("sampleMedian is " + sampleMedian);
 
         double controlSamplesMean = prepareControlSamples(factor);
 
@@ -193,7 +187,6 @@ public class Cov2lr {
             }
             iterator.close();
             writer.close();
-            System.err.println("Size total " + count);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
