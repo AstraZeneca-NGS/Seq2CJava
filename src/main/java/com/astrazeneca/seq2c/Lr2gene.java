@@ -4,6 +4,7 @@ import com.astrazeneca.seq2c.input.FileDataIterator;
 import com.astrazeneca.seq2c.input.Sample;
 import com.astrazeneca.seq2c.input.SampleStatistics;
 import com.astrazeneca.seq2c.input.StatisticsFactory;
+import htsjdk.samtools.util.CloseableIterator;
 import org.apache.commons.cli.*;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.util.Precision;
@@ -12,9 +13,11 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+//perl version: lr2gene.pl
 public class Lr2gene {
 
     private Map<String, Locus> genes;
+    //perl version: 19 str
     private double MINMAD = 10;
     private double MINDIFF = 0.7;
     private double PVALUE = 0.00001;
@@ -52,20 +55,23 @@ public class Lr2gene {
 
     public void process() {
         int j = 0;
-        FileDataIterator<SampleStatistics> iterator = new FileDataIterator(tempFile, new StatisticsFactory());
+        CloseableIterator<SampleStatistics> iterator = getFileDataIterator();
         Map<String, Map<String, Sig>> sampleSigs = new HashMap<>();
         Map<String, Integer> geneSigs = new HashMap<>();
 
+        //perl version: 52 str
         while (iterator.hasNext()) {
             SampleStatistics statistics = iterator.next();
             String sample = statistics.getSample();
             Map<String, Sig> results = new HashMap<>();
             sampleSigs.put(sample, results);
             Map<String, List<Sample>> gq = statistics.getGenes();
+            //perl version: 53 str
             for (Map.Entry<String, List<Sample>> entry2 : gq.entrySet()) {
                 String gene = entry2.getKey();
                 List<Sample> sq2amparr = entry2.getValue();
 
+                //perl version: 54 str
                 Collections.sort(sq2amparr, new Comparator<Sample>() {
                     @Override
                     public int compare(Sample ints, Sample otherInts) {
@@ -73,6 +79,7 @@ public class Lr2gene {
                     }
                 });
 
+                //perl version: 55 str
                 ArrayList<Double> lr = new ArrayList<>(sq2amparr.size());
                 for (Sample sqarr : sq2amparr) {
                     if (useControl) {
@@ -81,12 +88,14 @@ public class Lr2gene {
                         lr.add(sqarr.getNorm3());
                     }
                 }
+                //perl version: 56 str
                 double lr_med;
                 if (lr.size() > 1) {
                     lr_med = StatUtils.percentile(convertDoubles(lr), 50);// median
                 } else {
                     lr_med = lr.get(0);
                 }
+                //perl version: 57 str
                 Sig sig = checkBP(sq2amparr);
                 if (sig == null || Double.compare(sig.getSig(), -1.0) == 0) {
                     if (lr_med >= AMP) {
@@ -107,6 +116,7 @@ public class Lr2gene {
 
                 sig.setLrMed(lr_med);
 
+                //perl version: 74 str
                 if (sig.getBp().equals("BP")) {
                     String key = (gene + " " + sig.getSigseg()).intern();
                     if (geneSigs.containsKey(key)) {
@@ -122,6 +132,11 @@ public class Lr2gene {
         printResults(sampleSigs, geneSigs);
     }
 
+    CloseableIterator<SampleStatistics> getFileDataIterator() {
+        return new FileDataIterator<>(tempFile, new StatisticsFactory());
+    }
+
+    //perl version 79
     private void printResults(Map<String, Map<String, Sig>> sampleSigs, Map<String, Integer> geneSigs) {
         int j = 0;
         for (Map.Entry<String, Map<String, Sig>> entry : sampleSigs.entrySet()) {
@@ -161,6 +176,7 @@ public class Lr2gene {
         }
     }
 
+    //perl version: 90 str
     Sig checkBP(List<Sample> segs) {
         if (segs.size() < 4) return null;
 
@@ -290,6 +306,7 @@ public class Lr2gene {
         return sig;
     }
 
+    //perl version: 289 str
     private double[] isConsecutive(List<double[]> ref) {
 
         double skip = 0;
@@ -313,6 +330,7 @@ public class Lr2gene {
         return result;
     }
 
+    //perl version: 205
     private double[] getBPS(double[] lr) {
         double[] lrSorted = new double[lr.length];
         System.arraycopy(lr, 0, lrSorted, 0, lr.length);
@@ -336,6 +354,7 @@ public class Lr2gene {
         return convertDoubles(bpsArr);
     }
 
+    //perl version: 223
     private Sig findBP(double[] lr) {
         if (lr.length < 15) {
             Sig sig = new Sig(-1.0, 0, 0, "", 0, "", 0, 0, "", 0);
@@ -399,6 +418,7 @@ public class Lr2gene {
 
     }
 
+    //perl version: 177 str
     private Sig getCalls(List<double[]> bm, List<double[]> up) {
         double[] tlr1 = new double[bm.size()];
         double[] ti1 = new double[bm.size()];
@@ -439,6 +459,7 @@ public class Lr2gene {
 
     }
 
+    //perl version: 254 str
     private double[] isSig(List<double[]> bm, List<double[]> up) {
 
         double[] bm_x = new double[bm.size()];
@@ -577,6 +598,7 @@ public class Lr2gene {
         }
     }
 
+    //perl version: 304 str
     private static void help(Options options) {
         HelpFormatter formater = new HelpFormatter();
         formater.setOptionComparator(null);

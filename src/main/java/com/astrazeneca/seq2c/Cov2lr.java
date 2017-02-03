@@ -4,6 +4,7 @@ import com.astrazeneca.seq2c.input.FileDataIterator;
 import com.astrazeneca.seq2c.input.FileStoredDataFactory;
 import com.astrazeneca.seq2c.input.Sample;
 import com.astrazeneca.seq2c.input.SampleFactory;
+import htsjdk.samtools.util.CloseableIterator;
 import org.apache.commons.math3.analysis.function.Log;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
@@ -18,7 +19,7 @@ import java.util.*;
  * Normalize the coverage from targeted sequencing to CNV log2 ratio. The algorithm assumes the medium is diploid, thus not suitable
  * for homogeneous genes (e.g. parent-child).
  */
-
+//perl version: cov2lr.pl
 public class Cov2lr {
     /**
      * Help utils for statistics
@@ -48,6 +49,10 @@ public class Cov2lr {
      */
     private Map<String, Double> factor;
 
+    /**
+     * key - {@link Sample#name}
+     * value - map: key - sample, value - norm1
+     */
     private Map<String, Map<String, Double>> geneStatistics;
     /**
      * The failed factor for individual amplicons. If (the 80th percentile of an amplicon depth)/(the global median depth) is less
@@ -94,22 +99,27 @@ public class Cov2lr {
     /**
      * Main method, makes the statistics calculation according to the algorithm print result to the Standart output
      */
-
     public void doWork() {
 
         Set<String> sampleNames = new HashSet<>();
+        //perl version: 63 str
         double medDepth = readCoverageAndGetMedDepth(sampleNames);
 
         Set<String> badGenes = new HashSet<>();
+        //perl version: 76 str
         List<Double> gooddepth = splitQualitySamples(sampleNames, medDepth, badGenes);
+
+        //Re-adjust median depth using only those from good amplicons/genes
+        //perl version: 87 str
         double medDepthGood = median.evaluate(toDoubleArray(gooddepth));
-
+        //Gene/amplicon factor
+        //perl version: 89 str
         Map<String, Double> factor = getFactor2(medDepthGood, badGenes);
-
+        //perl version: 96 str
         Map<String, Double> sampleMedian = getSampleMedian(sampleNames, badGenes);
-
+        //perl version: 107 str
         double controlSamplesMean = prepareControlSamples(factor);
-
+        //perl version: 116 str
         setNormalization(medDepth, factor, sampleMedian, controlSamplesMean, badGenes);
 
         this.geneStatistics.clear();
@@ -133,11 +143,18 @@ public class Cov2lr {
         return controlSamples != null && controlSamples.length > 0;
     }
 
-    private double prepareControlSamples(Map<String, Double> factor2) {
+    /**
+     * Evaluate mean value from control samples
+     * @param factor2 factor from {@link Cov2lr#getFactor2(double, Set)}
+     * @return mean quantity of (norm1 * fact2 + 0.1)
+     */
+    //perl version: 107 str
+    double prepareControlSamples(Map<String, Double> factor2) {
         if (!useControlSamples()) return 0.0;
         List<Double> list = new LinkedList<>();
         for (String s : controlSamples) {
             for (Map.Entry<String, Map<String, Double>> entry : geneStatistics.entrySet()) {
+
                 Double norm1 = entry.getValue().get(s);
                 if (norm1 != null) {
                     if (factor2.containsKey(entry.getKey())) {
@@ -154,16 +171,30 @@ public class Cov2lr {
         return meanVal;
     }
 
-    private List<Sample> setNormalization(double medDepth, Map<String, Double> factor2, Map<String, Double> sampleMedian, double controlSamplesMean, Set<String> badGenes) {
+    /**
+     * Print results in statistics file.
+     * @param medDepth median depth from {@link Cov2lr#readCoverageAndGetMedDepth(Set)}
+     * @param factor2 factor from {@link Cov2lr#getFactor2(double, Set)}
+     * @param sampleMedian sample median from {@link Cov2lr#getSampleMedian(Set, Set)}
+     * @param controlSamplesMean mean value from control samples
+     * @param badGenes set of {@link Sample#name} that failed
+     * @return set of samples that should be printed in statistics file and print them
+     */
+    //perl version: 116 str
+    List<Sample> setNormalization(double medDepth,
+                                  Map<String, Double> factor2,
+                                  Map<String, Double> sampleMedian,
+                                  double controlSamplesMean,
+                                  Set<String> badGenes) {
         List<Sample> sampleResult = new ArrayList<>();
         try {
-            PrintWriter writer = new PrintWriter(tempFile);
+            PrintWriter writer = getPrintWriter();
             boolean useControlSamples = useControlSamples();
-            FileDataIterator<Sample> iterator = new FileDataIterator(covFile, factory);
+            CloseableIterator<Sample> iterator = getFileDataIterator();
             int count = 0;
             while (iterator.hasNext()) {
                 Sample sample = iterator.next();
-                if (badGenes.contains(sample.getName())) {
+                if (badGenes.contains(sample.getName())) { //perl version: 108 str
                     continue;
                 }
                 String key = sample.getName();
@@ -174,16 +205,17 @@ public class Cov2lr {
                 double fact2 = factor2.get(key);
                 double norm1 = geneStatistics.get(key).get(sample.getSample());
                 double smplMed = sampleMedian.get(sample.getSample());
-                sample.setNorm1b(Precision.round(norm1 * fact2 + 0.1, 2));
-                sample.setNorm2(Precision.round(medDepth != 0 ? log.value((norm1 * fact2 + 0.1) / medDepth) / LOG_OF_TWO : 0, 2));
-                sample.setNorm3(Precision.round(smplMed != 0 ? log.value((norm1 * fact2 + 0.1) / smplMed) / LOG_OF_TWO : 0, 2));
+                sample.setNorm1b(Precision.round(norm1 * fact2 + 0.1, 2)); //perl version: 110 str
+                sample.setNorm2(Precision.round(medDepth != 0 ? log.value((norm1 * fact2 + 0.1) / medDepth) / LOG_OF_TWO : 0, 2)); //perl version: 111 str
+                sample.setNorm3(Precision.round(smplMed != 0 ? log.value((norm1 * fact2 + 0.1) / smplMed) / LOG_OF_TWO : 0, 2)); //perl version: 112 str
+                //perl version: 122 str
                 if (useControlSamples) {
                     sample.setNorm3s(Precision.round(controlSamplesMean != 0 ? sample.getNorm1b() / controlSamplesMean / log.value(2) : 0, 2));
                 }
                 sampleResult.add(sample);
                 writer.write(sample.getResultString() + "\n");
                 writer.flush();
-                addLocus(sample);
+                addLocus(sample); //perl version: 120 str
             }
             iterator.close();
             writer.close();
@@ -193,7 +225,12 @@ public class Cov2lr {
         return sampleResult;
     }
 
-    private void addLocus(Sample sample) {
+    PrintWriter getPrintWriter() throws FileNotFoundException {
+        return new PrintWriter(tempFile);
+    }
+
+    //perl version: 120 str
+    void addLocus(Sample sample) {
         Locus locus = new Locus(sample.getGene(), sample.getStart(), sample.getEnd(), sample.getChr());
         long len = sample.getEnd() - sample.getStart() + 1;
         locus.setLength(len);
@@ -206,7 +243,14 @@ public class Cov2lr {
         locusMap.put(sample.getGene(), locus);
     }
 
-    private Map<String, Double> getSampleMedian(Set<String> sampleNames, Set<String> badGenes) {
+    /**
+     * Calculate median for each sample from coverage file
+     * @param sampleNames set of sample names from coverage file
+     * @param badGenes set of {@link Sample#name} that failed
+     * @return median by sample
+     */
+    //perl version: 96 str
+    Map<String, Double> getSampleMedian(Set<String> sampleNames, Set<String> badGenes) {
         Map<String, Double> sampleMedian = new LinkedHashMap<>();
         for (String s : sampleNames) {
             List<Double> list = new LinkedList<>();
@@ -221,7 +265,14 @@ public class Cov2lr {
         return sampleMedian;
     }
 
-    private Map<String, Double> getFactor2(final double medDepth, Set<String> badGenes) {
+    /**
+     * Gene/amplicon factor
+     * @param medDepth median of result {@link Cov2lr#splitQualitySamples(Set, double, Set)}
+     * @param badGenes set of {@link Sample#name} filled in {@link Cov2lr#splitQualitySamples(Set, double, Set)}
+     * @return map: key - {@link Sample#name}, value - medDepth / median
+     */
+    //perl version: 89 str
+    Map<String, Double> getFactor2(final double medDepth, Set<String> badGenes) {
         Map<String, Double> factor2 = new HashMap<>();
         for (Map.Entry<String, Map<String, Double>> gene : geneStatistics.entrySet()) {
             String key = gene.getKey();
@@ -243,11 +294,19 @@ public class Cov2lr {
         return factor2;
     }
 
-    private List<Double> splitQualitySamples(Set<String> samp, double medDepth, Set<String> badGenes) {
+    /**
+     * Split up genes/amplicons from coverage file
+     * @param samp set of sample names from coverage file
+     * @param medDepth median of result {@link Cov2lr#splitQualitySamples(Set, double, Set)}
+     * @param badGenes set of {@link Sample#name} filled in {@link Cov2lr#splitQualitySamples(Set, double, Set)} that failed
+     * @return List of good depth - calculated norm1 in according to 80% percentile
+     */
+    //perl version: 76 str
+    List<Double> splitQualitySamples(Set<String> samp, double medDepth, Set<String> badGenes) {
         List<Double> gooddepth = new LinkedList<>();
         for (Map.Entry<String, Map<String, Double>> gene : geneStatistics.entrySet()) {
             List<Double> temp = new LinkedList<>();
-            double kp80 = filterDataStream(samp, gene.getValue(), temp);
+            double kp80 = filterDataStream(samp, gene.getValue(), temp); //perl version: 80 str
             if (kp80 < medDepth * FAILEDFACTOR) {
                 badGenes.add(gene.getKey());
             } else {
@@ -258,21 +317,33 @@ public class Cov2lr {
         return gooddepth;
     }
 
-    private double readCoverageAndGetMedDepth(Set<String> samp) {
+    /**
+     * Read samples from coverage file, put them in map, calculates median depth and fill in map {@link Cov2lr#geneStatistics}
+     * @param samp set of sample names from coverage file; empty
+     * @return median depth
+     */
+    //perl version: 63 str
+    double readCoverageAndGetMedDepth(Set<String> samp) {
         List<Double> depth = new ArrayList<>();
-        FileDataIterator<Sample> iterator = new FileDataIterator(covFile, factory);
+        CloseableIterator<Sample> iterator = getFileDataIterator();
         while (iterator.hasNext()) {
             Sample sample = iterator.next();
             double norm1 = Precision.round((sample.getCov() * factor.get(sample.getSample())), 2);
             depth.add(norm1);
             samp.add(sample.getSample());
-            putInMap(sample, norm1);
+            putInMap(sample, norm1); //perl version: 68 str
         }
         iterator.close();
         return median.evaluate(toDoubleArray(depth));
     }
 
-    private void putInMap(Sample sample, double norm1) {
+    CloseableIterator<Sample> getFileDataIterator() {
+        return new FileDataIterator(covFile, factory);
+    }
+
+    //perl version: 68 str
+    // fill in geneStatistics
+    void putInMap(Sample sample, double norm1) {
         String gene = sample.getName();
         Map<String, Double> genesToNorm = geneStatistics.get(gene);
         if (genesToNorm == null) {
@@ -280,10 +351,17 @@ public class Cov2lr {
         }
         genesToNorm.put(sample.getSample(), norm1);
         geneStatistics.put(gene, genesToNorm);
-
     }
 
-    private double filterDataStream(Set<String> sampleSet, Map<String, Double> map, List<Double> list) {
+    /**
+     * Evaluates 80% percentile
+     * @param sampleSet set of sample names from coverage file
+     * @param map value from geneStatistics map
+     * @param list list of numbers from geneStatistics by sample
+     * @return 80% percentile
+     */
+    //perl version: 80 str
+    double filterDataStream(Set<String> sampleSet, Map<String, Double> map, List<Double> list) {
         for (String sample : sampleSet) {
             if (map.containsKey(sample)) {
                 list.add(map.get(sample));
@@ -305,5 +383,9 @@ public class Cov2lr {
 
     public Map<String, Locus> getLocusMap() {
         return locusMap;
+    }
+
+    Map<String, Map<String, Double>> getGeneStatistics() {
+        return geneStatistics;
     }
 }

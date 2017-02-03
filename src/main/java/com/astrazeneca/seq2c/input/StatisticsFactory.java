@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * Factory for instancing new {@link SampleStatistics} objects from String line.
+ * String format is:
+ * Sample_Name(String) - Gene(String) - Chromosome(String) - Start(int) - End(int) - Len(int) - Norm3(double) - Norm3s(double)
+ */
 public class StatisticsFactory extends FileStoredDataFactory<SampleStatistics> {
 
     @Override

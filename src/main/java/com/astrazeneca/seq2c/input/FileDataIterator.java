@@ -1,11 +1,17 @@
 package com.astrazeneca.seq2c.input;
 
+import htsjdk.samtools.util.CloseableIterator;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Iterator;
 
-public class FileDataIterator<T extends FileStoredData> implements Iterator<FileStoredData> {
+
+/**
+ * Represent a file abstraction and has iterator interface.
+ * It will skip a string from file if it meets specified conditions.
+ * */
+public class FileDataIterator<T extends FileStoredData> implements CloseableIterator<T> {
 
     private BufferedReader bufferReader;
     private T next;
@@ -20,6 +26,13 @@ public class FileDataIterator<T extends FileStoredData> implements Iterator<File
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    //for tests
+    FileDataIterator(BufferedReader bufferedReader, FileStoredDataFactory<T> factory) {
+        bufferReader = bufferedReader;
+        this.factory = factory;
+        current = loadNext();
     }
 
     @Override
@@ -56,6 +69,7 @@ public class FileDataIterator<T extends FileStoredData> implements Iterator<File
         return next;
     }
 
+    //perl version: 48 str
     private String getNextLine() {
         String line = null;
         try {

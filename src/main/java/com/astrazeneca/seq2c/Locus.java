@@ -1,6 +1,5 @@
 package com.astrazeneca.seq2c;
 
-
 class Locus {
     String geneName;
     String chr;
@@ -28,7 +27,7 @@ class Locus {
             this.start = start;
         }
     }
-
+    //perl version: 55-58 str
     public StringBuilder getName() {
         StringBuilder result = new StringBuilder();
         result.append(chr).append("\t");

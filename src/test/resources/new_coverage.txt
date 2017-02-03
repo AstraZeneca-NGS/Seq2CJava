@@ -1,0 +1,5 @@
+Sample	Gene	Chr	Start	End	Tag	Length	MeanDepth
+sample_name1	gene_name1	chr21	9907194	9908432	Amplicon	1239	2.00
+sample_name1	gene_name1	chr21	9907194	9908432	Amplicon	1239	1.00
+sample_name2	gene_name1	chr21	9907194	9908432	Gene	2478	3.00
+sample_name1	gene_name2	chr21	9909047	9909277	Amplicon	231	4.00

@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Class represents sample statistics. Store statistics for each gene.
+ * {@link SampleStatistics#equals} for the class return true if sample names are equals.
+ */
 public class SampleStatistics implements FileStoredData {
 
     private String sample;
@@ -26,7 +30,6 @@ public class SampleStatistics implements FileStoredData {
     }
 
     @Override
-
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

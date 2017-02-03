@@ -9,6 +9,7 @@ import htsjdk.samtools.BAMIndexMetaData;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
 
+//perl version: bam2reads
 public class Bam2Reads {
 
     /**
@@ -22,6 +23,7 @@ public class Bam2Reads {
      *
      */
 
+    //perl version: 12-21 str
     public static Map<String, Long> printStatsToFile(String fileIn) throws IOException {
         Map<String, String> files = parseFile(fileIn);
         Map<String, Long> result = new LinkedHashMap<>();
@@ -50,6 +52,7 @@ public class Bam2Reads {
      * @return map with sample names/bam file names
      * @throws IOException
      */
+    //perl version: 14 str
     public static Map<String, String> parseFile(String fileName) throws IOException {
         Map<String, String> map = new LinkedHashMap<>();
 

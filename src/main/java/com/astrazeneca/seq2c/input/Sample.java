@@ -2,6 +2,9 @@ package com.astrazeneca.seq2c.input;
 
 import java.io.Serializable;
 
+/**
+ * Represent a Sample.
+ * */
 public class Sample implements Serializable, FileStoredData{
 
     private String name;
@@ -15,6 +18,30 @@ public class Sample implements Serializable, FileStoredData{
     private double norm1b;
     private double norm2;
 
+    private double norm3;
+    private double norm3s;
+
+    /**
+     * @param name Patient name
+     * @param sample Sample name
+     * @param chr Chromosome contains this sample
+     * @param start Sample start
+     * @param end Sample end
+     * @param gene Gene contains sample
+     * @param len Length of this sample
+     * @param cov coverage of this sample
+     */
+    public Sample(String name, String sample, String chr, int start, int end, String gene, int len, double cov) {
+        this.name = name;
+        this.sample = sample;
+        this.start = start;
+        this.end = end;
+        this.len = len;
+        this.cov = cov;
+        this.gene = gene;
+        this.chr = chr;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -26,26 +53,11 @@ public class Sample implements Serializable, FileStoredData{
         return sample != null ? sample.equals(sample1.sample) : sample1.sample == null;
 
     }
-
     @Override
     public int hashCode() {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (sample != null ? sample.hashCode() : 0);
         return result;
-    }
-
-    private double norm3;
-    private double norm3s;
-
-    public Sample(String name, String sample, String chr, int start, int end, String gene, int len, double cov) {
-        this.name = name;
-        this.sample = sample;
-        this.start = start;
-        this.end = end;
-        this.len = len;
-        this.cov = cov;
-        this.gene = gene;
-        this.chr = chr;
     }
 
 

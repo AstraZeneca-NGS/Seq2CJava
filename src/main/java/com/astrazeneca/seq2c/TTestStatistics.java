@@ -6,6 +6,7 @@ import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
+//perl version: libraries/Statistics/TTest.pm
 public class TTestStatistics {
 
     public static double getT(double[] x, double[] y) {

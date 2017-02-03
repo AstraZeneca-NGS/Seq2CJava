@@ -1,5 +1,8 @@
 package com.astrazeneca.seq2c;
 
+/**
+ * Data structure for gene.
+ * */
 public class Gene {
     private String sample;
     private String name;
@@ -67,6 +70,42 @@ public class Gene {
 
     public void setMdepth(long mdepth) {
         this.mdepth = mdepth;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Gene gene = (Gene) o;
+
+        if (getStart() != gene.getStart()) return false;
+        if (getEnd() != gene.getEnd()) return false;
+        if (getLen() != gene.getLen()) return false;
+        if (Double.compare(gene.mdepth, mdepth) != 0) return false;
+        if (getSample() != null ? !getSample().equals(gene.getSample()) : gene.getSample() != null)
+            return false;
+        if (getName() != null ? !getName().equals(gene.getName()) : gene.getName() != null)
+            return false;
+        if (getChr() != null ? !getChr().equals(gene.getChr()) : gene.getChr() != null)
+            return false;
+        return getTag() != null ? getTag().equals(gene.getTag()) : gene.getTag() == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        result = getSample() != null ? getSample().hashCode() : 0;
+        result = 31 * result + (getName() != null ? getName().hashCode() : 0);
+        result = 31 * result + (getChr() != null ? getChr().hashCode() : 0);
+        result = 31 * result + (int) (getStart() ^ (getStart() >>> 32));
+        result = 31 * result + (int) (getEnd() ^ (getEnd() >>> 32));
+        result = 31 * result + (int) (getLen() ^ (getLen() >>> 32));
+        temp = Double.doubleToLongBits(mdepth);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (getTag() != null ? getTag().hashCode() : 0);
+        return result;
     }
 
     @Override

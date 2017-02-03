@@ -1,13 +1,18 @@
 package com.astrazeneca.seq2c;
 
 import com.astrazeneca.seq2c.input.Sample;
-import org.junit.Ignore;
-import org.junit.Test;
+import com.astrazeneca.seq2c.input.SampleStatistics;
+import com.astrazeneca.seq2c.input.StatisticsFactory;
+import htsjdk.samtools.util.AbstractIterator;
+import htsjdk.samtools.util.CloseableIterator;
+import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.Assert.assertEquals;
 
 public class Lr2geneTest {
 
@@ -183,8 +188,7 @@ public class Lr2geneTest {
         assertEquals("6,7,8", sig.getSigseg());
     }
 
-    @Ignore
-    @Test
+    @Test(enabled = false)
     public void checkBPTestCPSF4L() throws Exception {
 
         List<Sample> samples = getSampleCPSF4L();
@@ -228,7 +232,6 @@ public class Lr2geneTest {
         assertEquals(1.3075, sig.getSigdiff(), 0.001);
         assertEquals("20,21,22,23", sig.getSigseg());
     }
-
 
     private List<Sample> getSampleNotAGene4865() {
 
@@ -604,4 +607,4 @@ public class Lr2geneTest {
 
         return samples;
     }
- }
+}

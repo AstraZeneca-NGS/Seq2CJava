@@ -7,6 +7,10 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
+/**
+ * The Seq2C starting point class: contains {@link Seq2c#main(String[])} method that initializes all modules and runs the
+ * program. Also, this class contains methods for printing output information into file.
+ */
 public class Seq2c {
 
     private static final String TEMP_FILE = "statistics.txt";
@@ -60,7 +64,7 @@ public class Seq2c {
             }
 
             Map<String, Long> stat = Bam2Reads.printStatsToFile(sam2bamFile);
-            printStat(stat);
+            printStat(stat, "read_stats.txt");
 
             Cov2lr cov2lr = new Cov2lr(true, stat, covFile, control, TEMP_FILE);
             cov2lr.doWork();
@@ -75,9 +79,9 @@ public class Seq2c {
         }
     }
 
-    private static void printStat(Map<String, Long> sam2bam) {
+    static void printStat(Map<String, Long> sam2bam, String readStatFile) {
         try {
-            FileWriter writer = new FileWriter("read_stats.txt");
+            FileWriter writer = new FileWriter(readStatFile);
             for (Map.Entry<String, Long> entry : sam2bam.entrySet()) {
                 writer.write(entry.getKey() + "\t" + entry.getValue() + "\n");
                 writer.flush();
@@ -88,7 +92,8 @@ public class Seq2c {
         }
     }
 
-    private static void printCoverage(Collection<Gene> sqrlist, String covFile, boolean append) {
+    //perl version: seq2cov 130 str
+    static void printCoverage(Collection<Gene> sqrlist, String covFile, boolean append) {
         try (FileWriter writer = new FileWriter(covFile, append)) {
             writer.write("Sample\tGene\tChr\tStart\tEnd\tTag\tLength\tMeanDepth\n");
             writer.flush();
@@ -124,7 +129,7 @@ public class Seq2c {
         System.exit(0);
     }
 
-    private static Options buildCmdOptions() {
+    static Options buildCmdOptions() {
         Options options = Lr2gene.getOptions();
         options.addOption(OptionBuilder.withArgName("number of threads")
                 .hasOptionalArg()
@@ -153,7 +158,7 @@ public class Seq2c {
         return options;
     }
 
-    private static int getThreadsCount(CommandLine cmd) throws ParseException {
+    static int getThreadsCount(CommandLine cmd) throws ParseException {
         int threads = 0;
         if (cmd.hasOption("i")) {
             Object value = cmd.getParsedOptionValue("i");
@@ -167,7 +172,7 @@ public class Seq2c {
 
     }
 
-    private static int getRunPart(CommandLine cmd) throws ParseException  {
+    static int getRunPart(CommandLine cmd) throws ParseException  {
         int part = 0;
         if (cmd.hasOption("r")) {
             Object value = cmd.getParsedOptionValue("r");
